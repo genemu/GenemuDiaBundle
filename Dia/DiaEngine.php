@@ -73,14 +73,18 @@ class DiaEngine
 
             foreach ($element->getOperations() as $operation) {
                 $name = $operation->getName();
+                $parameters = array();
+                foreach ($operation->getParameters() as $parameter) {
+                    $parameters[$parameter->getName()] = $parameter->getType();
+                }
 
                 foreach ($this->extensions as $prefix => $extension) {
                     if (in_array($name, $extension['types'])) {
                         $class->addUse($extension['namespace'], $prefix);
 
-                        $generator = new $extension['generator']();
+                        $generator = new $extension['generator']($class, $prefix, $parameters);
                         if (method_exists($generator, 'init'.$name)) {
-                            $generator->{'init'.$name}($class);
+                            $generator->{'init'.$name}();
                         }
                     }
                 }

@@ -39,6 +39,7 @@ class EntityGenerator extends Generator
         $code[] = $this->generateClassAnnotations($metadata);
         $code[] = $this->generateClassName($metadata);
         $code[] = '{';
+        $code[] = $this->generateClassFields($metadata);
         $code[] = '}';
 
         return implode("\n", $code);
@@ -85,5 +86,35 @@ class EntityGenerator extends Generator
         $abstract = ($metadata->isAbstract())?'abstract ':'';
 
         return $abstract.'class '.$metadata->getName();
+    }
+
+    protected function generateClassFields(ClassMetadataInfo $metadata)
+    {
+        $spaces = $this->getSpaces();
+        $code = array();
+        foreach ($metadata->getFields() as $field) {
+            $params = array();
+            foreach ($field as $attr => $value) {
+                if (!in_array($attr, array('id', 'fieldName', 'default'))) {
+                    $params[] = (($attr == 'columnName')?'name':$attr).'="'.$value.'"';
+                }
+            }
+
+            $code[] = $spaces.'/**';
+            $code[] = $spaces.' * @var '.$field['type'].' $'.$field['fieldName'];
+            $code[] = $spaces.' *';
+            $code[] = $spaces.' * @'.$this->prefix.'\Column('.implode(', ', $params).')';
+
+            if (isset($field['id']) && $field['id']) {
+                $code[] = $spaces.' * @'.$this->prefix.'\Id';
+                $code[] = $spaces.' * @'.$this->prefix.'\GeneratedValue(strategy="AUTO")';
+            }
+
+            $code[] = $spaces.' */';
+            $code[] = $spaces.'protected $'.$field['fieldName'].';';
+            $code[] = '';
+        }
+
+        return implode("\n", $code);
     }
 }

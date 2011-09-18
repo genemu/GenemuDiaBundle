@@ -18,11 +18,23 @@ class Generator
 {
     protected $prefix;
     protected $extension;
+    protected $spaces;
 
     public function __construct()
     {
         $this->extension = 'php';
         $this->prefix = 'ORM';
+        $this->spaces = 4;
+    }
+
+    public function setSpaces($spaces)
+    {
+        $this->spaces = $spaces;
+    }
+
+    public function getSpaces($nb = 1)
+    {
+        return str_repeat(str_repeat(' ', $this->spaces), $nb);
     }
 
     protected function generate($name, $path, $contents)

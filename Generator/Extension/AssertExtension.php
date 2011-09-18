@@ -16,7 +16,7 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
 /**
  * @author Olivier Chauvel <olchauvel@gmail.com>
  */
-class AssertExtension
+class AssertExtension extends GeneratorExtension
 {
 
 }

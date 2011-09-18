@@ -31,6 +31,7 @@ class ClassMetadataInfo
         $this->name = $name;
         $this->path = $path;
 
+        $this->fields = array();
         $this->addUse('Doctrine\ORM\Mapping', 'ORM');
     }
 
@@ -127,14 +128,19 @@ class ClassMetadataInfo
             $field['length'] = $length;
         }
 
-        if (!in_array('NOTNULL', $types)) {
+        if (!in_array('NOTNULL', $types) && $type != 'primaryKey') {
             $field['nullable'] = 'true';
         }
 
-        if (in_array('UNIQUE', $types)) {
+        if (in_array('UNIQUE', $types) && $type != 'primaryKey') {
             $field['unique'] = 'true';
         }
 
         $this->fields[$name] = $field;
+    }
+
+    public function getFields()
+    {
+        return $this->fields;
     }
 }

@@ -11,15 +11,13 @@
 
 namespace Genemu\Bundle\DiaBundle\Generator\Extension;
 
-use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
-
 /**
  * @author Olivier Chauvel <olchauvel@gmail.com>
  */
-class ORMExtension
+class ORMExtension extends GeneratorExtension
 {
-    public function initMappedSuperClass(ClassMetadataInfo $metadata)
+    public function initMappedSuperClass()
     {
-        $metadata->setMappedSuperClass(true);
+        $this->metadata->setMappedSuperClass(true);
     }
 }

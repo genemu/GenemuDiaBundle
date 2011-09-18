@@ -16,7 +16,16 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
 /**
  * @author Olivier Chauvel <olchauvel@gmail.com>
  */
-class GedmoExtension extends GeneratorExtension
+class GeneratorExtension
 {
+    protected $metadata;
+    protected $prefix;
+    protected $parameters;
 
+    public function __construct(ClassMetadataInfo $metadata, $prefix, array $parameters)
+    {
+        $this->metadata = $metadata;
+        $this->prefix = $prefix;
+        $this->parameters = $parameters;
+    }
 }
