@@ -34,3 +34,20 @@ file is usually located at `app/AppKernel`:
             new Genemu\Bundle\FormBundle\GenemuDiaBundle(),
         );
     )
+
+### Uses the bundle
+
+custom your generate Entity and add your extension generator
+
+    genemu_dia:
+        MyExtension:
+            generator: MyNamespace\Generator\Extension\MyExtensionGenerator
+            namespace: MyNamespace\Mapping
+            types:
+                - 'Type1'
+                - 'Type2'
+                - ...
+
+generate your Schema to Entity
+
+    ./app/console dia:entity:create app/schema.dia
