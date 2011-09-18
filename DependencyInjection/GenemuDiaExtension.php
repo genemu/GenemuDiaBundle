@@ -18,8 +18,20 @@ class GenemuDiaExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container)
     {
+        $extensions = array(
+            'ORM' => array(
+                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\ORMExtension',
+                'namespace' => 'Doctrine\ORM\Mapping',
+                'types' => array(
+                    'MappedSuperClass'
+                )
+            )
+        );
+
         if (isset($configs[0]['extensions'])) {
-            $container->setParameter('genemu_dia.extensions', $configs[0]['extensions']);
+            $extensions = array_merge($extensions, $configs[0]['extensions']);
         }
+
+        $container->setParameter('genemu_dia.extensions', $extensions);
     }
 }

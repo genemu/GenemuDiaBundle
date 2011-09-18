@@ -16,11 +16,13 @@ namespace Genemu\Bundle\DiaBundle\Generator;
  */
 class Generator
 {
+    protected $prefix;
     protected $extension;
 
     public function __construct()
     {
         $this->extension = 'php';
+        $this->prefix = 'ORM';
     }
 
     protected function generate($name, $path, $contents)

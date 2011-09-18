@@ -18,9 +18,24 @@ use Symfony\Component\CssSelector\CssSelector;
  */
 class DiaXML extends \SimpleXMLElement
 {
+    public function getPackages()
+    {
+        return $this->xpath($this->toXPath('object', 'UML - LargePackage'));
+    }
+
     public function getClasses()
     {
         return $this->xpath($this->toXPath('object', 'UML - Class'));
+    }
+
+    public function getAttributes()
+    {
+        return $this->xpath($this->toXPath('composite', 'umlatrribute', ''));
+    }
+
+    public function getOperations()
+    {
+        return $this->xpath($this->toXPath('composite', 'umloperation'));
     }
 
     public function getId()
@@ -31,6 +46,20 @@ class DiaXML extends \SimpleXMLElement
     public function getName()
     {
         $element = $this->xpath($this->toXPath('string', 'name', ''));
+
+        return $element?str_replace('#', '', (string) $element[0]):null;
+    }
+
+    public function getType()
+    {
+        $element = $this->xpath($this->toXPath('string', 'type', ''));
+
+        return $element?str_replace('#', '', (string) $element[0]):null;
+    }
+
+    public function getValue()
+    {
+        $element = $this->xpath($this->toXPath('string', 'value', ''));
 
         return $element?str_replace('#', '', (string) $element[0]):null;
     }
@@ -52,7 +81,7 @@ class DiaXML extends \SimpleXMLElement
     public function getNamePackage(\SimpleXMLElement $element)
     {
         $cPosition = $element->getPosition();
-        foreach($this->xpath($this->toXPath('object', 'UML - LargePackage')) as $element) {
+        foreach($this->getPackages() as $element) {
             $pPosition = $element->getPosition();
             if (
                 (double) $pPosition[0] < (double) $cPosition[0] &&

@@ -34,6 +34,8 @@ class EntityGenerator extends Generator
         $code[] = '';
         $code[] = $this->generateNamespace($metadata);
         $code[] = '';
+        $code[] = $this->generateUses($metadata);
+        $code[] = '';
         $code[] = $this->generateClassAnnotations($metadata);
         $code[] = $this->generateClassName($metadata);
         $code[] = '{';
@@ -47,10 +49,32 @@ class EntityGenerator extends Generator
         return 'namespace '.$metadata->getNamespace().';';
     }
 
+    protected function generateUses(ClassMetadataInfo $metadata)
+    {
+        $code = array();
+        foreach ($metadata->getUses() as $prefix => $mapping) {
+            $code[] = 'use '.$mapping.' as '.$prefix.';';
+        }
+
+        return implode("\n", $code);
+    }
+
     protected function generateClassAnnotations(ClassMetadataInfo $metadata)
     {
         $code[] = '/**';
         $code[] = ' * '.$metadata->getNamespace().'\\'.$metadata->getName();
+        $code[] = ' *';
+
+        if ($metadata->isMappedSupperClass()) {
+            $code[] = ' * @'.$this->prefix.'\MappedSupperClass()';
+        } else {
+            $table = $metadata->getTableName();
+            $repository = $metadata->getNamespace().'\\Repository\\'.$metadata->getName();
+
+            $code[] = ' * @'.$this->prefix.'\Table('.($table?'name="'.$table.'"':'').')';
+            $code[] = ' * @'.$this->prefix.'\Entity('.($repository?'repositoryClass="'.$repository.'"':'').')';
+        }
+
         $code[] = ' */';
 
         return implode("\n", $code);

@@ -38,6 +38,7 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
 
         $dia = new DiaEngine($container->get('kernel'), $container->get('doctrine'));
         $dia->loadFile($input->getArgument('file'));
+        $dia->setExtensions($container->getParameter('genemu_dia.extensions'));
 
         foreach ($dia->getClasses() as $class) {
             $generator = $this->getEntityGenerator();
