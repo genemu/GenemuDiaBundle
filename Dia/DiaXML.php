@@ -28,6 +28,11 @@ class DiaXML extends \SimpleXMLElement
         return $this->xpath($this->toXPath('object', 'UML - Class', ''));
     }
 
+    public function getGeneralization()
+    {
+        return $this->xpath($this->toXPath('object', 'UML - Generalization'));
+    }
+
     public function getAttributes()
     {
         return $this->xpath($this->toXPath('composite', 'umlattribute'));
@@ -83,6 +88,13 @@ class DiaXML extends \SimpleXMLElement
         return $element?(($element[0]->attributes()->val == 'true')?true:false):null;
     }
 
+    protected function getDirection()
+    {
+        $element = $this->xpath($this->toXPath('enum', 'direction'));
+
+        return $element?(int) $element[0]->attributes()->val:null;
+    }
+
     public function getNamePackage(\SimpleXMLElement $element)
     {
         $cPosition = $element->getPosition();
@@ -101,6 +113,31 @@ class DiaXML extends \SimpleXMLElement
         return null;
     }
 
+    public function getConnection(array $classes, $type = 'simple')
+    {
+        $element = $this->xpath($this->toXPath('connection'));
+
+        if (!$element) {
+            return null;
+        }
+
+        $connect = array(
+            'from' => $classes[(string) $element[0]->attributes()->to],
+            'to' => $classes[(string) $element[1]->attributes()->to]
+        );
+
+        if ($type == 'association') {
+            if ($element->getDirection() == 2) {
+                $temp = $connect['from'];
+
+                $connect['from'] = $connect['to'];
+                $connect['to'] = $temp;
+            }
+        }
+
+        return $connect;
+    }
+
     protected function toXPath($type, $replace = null, $prefix = 'descendant-or-self::')
     {
         $cssExpr = null;
@@ -117,6 +154,7 @@ class DiaXML extends \SimpleXMLElement
             case 'boolean':
             case 'string':
             case 'rectangle':
+            case 'enum':
                 $cssExpr = sprintf('dia|attribute[name="%s"] > dia|%s', $replace, $type);
         }
 

@@ -19,10 +19,11 @@ class ClassMetadataInfo
     protected $isAbstract;
     protected $name;
     protected $path;
+    protected $parent;
     protected $namespace;
     protected $uses;
     protected $tableName;
-    protected $isMappedSuperClass;
+    protected $isMappedSuperclass;
     protected $fields;
 
     public function __construct($name, $path, $abstract = false)
@@ -35,6 +36,15 @@ class ClassMetadataInfo
         $this->addUse('Doctrine\ORM\Mapping', 'ORM');
     }
 
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
+
+        if ($this->namespace != $parent->getNamespace()) {
+            $this->addUse($parent->getNamespace().'\\'.$parent->getName(), $parent->getName());
+        }
+    }
+
     public function setNamespace($namespace)
     {
         $this->namespace = $namespace;
@@ -45,9 +55,9 @@ class ClassMetadataInfo
         $this->tableName = $tableName;
     }
 
-    public function setMappedSuperClass($boolean)
+    public function setMappedSuperclass($boolean)
     {
-        $this->isMappedSuperClass = $boolean;
+        $this->isMappedSuperclass = $boolean;
     }
 
     public function addUse($mapping, $prefix)
@@ -62,9 +72,14 @@ class ClassMetadataInfo
         return $this->isAbstract;
     }
 
-    public function isMappedSupperClass()
+    public function isMappedSuperclass()
     {
-        return $this->isMappedSuperClass;
+        return $this->isMappedSuperclass;
+    }
+
+    public function getParent()
+    {
+        return $this->parent;
     }
 
     public function getName()

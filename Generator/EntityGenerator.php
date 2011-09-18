@@ -54,7 +54,9 @@ class EntityGenerator extends Generator
     {
         $code = array();
         foreach ($metadata->getUses() as $prefix => $mapping) {
-            $code[] = 'use '.$mapping.' as '.$prefix.';';
+            $name = substr($mapping, strrpos($mapping, '\\')+1);
+
+            $code[] = 'use '.$mapping.(($name != $prefix)?' as '.$prefix:'').';';
         }
 
         return implode("\n", $code);
@@ -66,8 +68,8 @@ class EntityGenerator extends Generator
         $code[] = ' * '.$metadata->getNamespace().'\\'.$metadata->getName();
         $code[] = ' *';
 
-        if ($metadata->isMappedSupperClass()) {
-            $code[] = ' * @'.$this->prefix.'\MappedSupperClass()';
+        if ($metadata->isMappedSuperclass()) {
+            $code[] = ' * @'.$this->prefix.'\MappedSuperclass()';
         } else {
             $table = $metadata->getTableName();
             $repository = $metadata->getNamespace().'\\Repository\\'.$metadata->getName();
@@ -83,9 +85,10 @@ class EntityGenerator extends Generator
 
     protected function generateClassName(ClassMetadataInfo $metadata)
     {
-        $abstract = ($metadata->isAbstract())?'abstract ':'';
+        $abstract = $metadata->isAbstract()?'abstract ':'';
+        $parent = $metadata->getParent()?' extends '.$metadata->getParent()->getName():'';
 
-        return $abstract.'class '.$metadata->getName();
+        return $abstract.'class '.$metadata->getName().$parent;
     }
 
     protected function generateClassFields(ClassMetadataInfo $metadata)

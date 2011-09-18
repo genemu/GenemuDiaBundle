@@ -23,7 +23,7 @@ class GenemuDiaExtension extends Extension
                 'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\ORMExtension',
                 'namespace' => 'Doctrine\ORM\Mapping',
                 'types' => array(
-                    'MappedSuperClass'
+                    'MappedSuperclass'
                 )
             )
         );

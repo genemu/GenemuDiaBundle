@@ -73,6 +73,7 @@ class DiaEngine
 
             foreach ($element->getOperations() as $operation) {
                 $name = $operation->getName();
+
                 $parameters = array();
                 foreach ($operation->getParameters() as $parameter) {
                     $parameters[$parameter->getName()] = $parameter->getType();
@@ -91,6 +92,12 @@ class DiaEngine
             }
 
             $this->classes[$element->getId()] = $class;
+        }
+
+        foreach ($this->xml->getGeneralization() as $general) {
+            $connect = $general->getConnection($this->classes);
+
+            $connect['to']->setParent($connect['from']);
         }
 
         return $this->classes;

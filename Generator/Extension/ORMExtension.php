@@ -16,8 +16,8 @@ namespace Genemu\Bundle\DiaBundle\Generator\Extension;
  */
 class ORMExtension extends GeneratorExtension
 {
-    public function initMappedSuperClass()
+    public function initMappedSuperclass()
     {
-        $this->metadata->setMappedSuperClass(true);
+        $this->metadata->setMappedSuperclass(true);
     }
 }
