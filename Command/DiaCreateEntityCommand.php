@@ -17,6 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 
 use Genemu\Bundle\DiaBundle\Dia\DiaEngine;
+use Genemu\Bundle\DiaBundle\Generator\EntityGenerator;
 
 /**
  * @author Olivier Chauvel <olchauvel@gmail.com>
@@ -33,7 +34,21 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $dia = new DiaEngine($input->getArgument('file'));
-        $dia->getClasses();
+        $container = $this->getContainer();
+
+        $dia = new DiaEngine($container->get('kernel'), $container->get('doctrine'));
+        $dia->loadFile($input->getArgument('file'));
+
+        foreach ($dia->getClasses() as $class) {
+            $generator = $this->getEntityGenerator();
+            $generator->generateEntity($class);
+        }
+    }
+
+    protected function getEntityGenerator()
+    {
+        $generator = new EntityGenerator();
+
+        return $generator;
     }
 }

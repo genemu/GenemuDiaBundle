@@ -23,6 +23,11 @@ class DiaXML extends \SimpleXMLElement
         return $this->xpath($this->toXPath('object', 'UML - Class'));
     }
 
+    public function getId()
+    {
+        return (string) $this[0]->attributes()->id;
+    }
+
     public function getName()
     {
         $element = $this->xpath($this->toXPath('string', 'name', ''));
@@ -44,7 +49,7 @@ class DiaXML extends \SimpleXMLElement
         return $element?(($element[0]->attributes()->val == 'true')?true:false):null;
     }
 
-    public function getPackage(\SimpleXMLElement $element)
+    public function getNamePackage(\SimpleXMLElement $element)
     {
         $cPosition = $element->getPosition();
         foreach($this->xpath($this->toXPath('object', 'UML - LargePackage')) as $element) {
