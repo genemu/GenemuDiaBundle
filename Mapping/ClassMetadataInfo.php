@@ -74,7 +74,11 @@ class ClassMetadataInfo
 
     public function addExtension($type, GeneratorExtension $generator)
     {
-        $this->extensions[$type] = $generator;
+        if (!isset($this->extensions[$type])) {
+            $this->extensions[$type] = array();
+        }
+
+        $this->extensions[$type] = array_merge($this->extensions[$type], array($generator));
     }
 
     public function addUse($mapping, $prefix)
@@ -238,6 +242,7 @@ class ClassMetadataInfo
             'type' => 'OneToMany',
             'fieldName' => $nameTo,
             'targetEntity' => $targetTo,
+            'sourceEntity' => $class->getName(),
             'mappedBy' => $nameFrom
         ));
 
@@ -245,6 +250,7 @@ class ClassMetadataInfo
             'type' => 'ManyToOne',
             'fieldName' => $nameFrom,
             'targetEntity' => $targetFrom,
+            'sourceEntity' => $this->name,
             'inversedBy' => $nameTo
         ));
     }

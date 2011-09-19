@@ -27,7 +27,10 @@ class GenemuDiaExtension extends Extension
                     'InheritanceType',
                     'DiscriminatorColumn',
                     'ChangeTrackingPolicy',
-                    'HasLifecycleCallbacks'
+                    'HasLifecycleCallbacks',
+                    'Index',
+                    'OneToMany',
+                    'ManyToOne'
                 )
             )
         );

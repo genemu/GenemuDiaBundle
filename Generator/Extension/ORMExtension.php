@@ -21,9 +21,28 @@ class ORMExtension extends GeneratorExtension
         $this->metadata->setMappedSuperclass(true);
     }
 
+    public function generateIndexClassTable()
+    {
+        if (!isset($this->parameters['name']) || !isset($this->parameters['columns'])) {
+            return null;
+        }
+
+        $columns = array();
+        foreach (explode(',', $this->parameters['columns']) as $column) {
+            $columns[] = '"'.$column.'"';
+        }
+
+        $params = array(
+            'name="'.$this->parameters['name'].'"',
+            'columns={'.implode(', ', $columns).'}'
+        );
+
+        return 'indexes={@'.$this->prefix.'\Index('.implode(', ', $params).')}';
+    }
+
     public function generateMappedSuperclassClassAnnotations()
     {
-        return ' * @'.$this->prefix.'\MappedSuperclass()';
+        return '@'.$this->prefix.'\MappedSuperclass()';
     }
 
     public function generateInheritanceTypeClassAnnotations()
@@ -32,7 +51,7 @@ class ORMExtension extends GeneratorExtension
             return null;
         }
 
-        return ' * @'.$this->prefix.'\InheritanceType("'.$this->parameters['type'].'")';
+        return '@'.$this->prefix.'\InheritanceType("'.$this->parameters['type'].'")';
     }
 
     public function generateDiscriminatorColumnClassAnnotations()
@@ -42,29 +61,30 @@ class ORMExtension extends GeneratorExtension
             'type' => 'string'
         ), $this->parameters);
 
-        $code[] = ' * @'.$this->prefix.'\DiscriminatorColumn(name="'.$param['name'].'", type="'.$param['type'].'")';
+        $name = $this->metadata->getName();
+        $namespace = $this->metadata->getNamespace().'\\'.$name;
+        $column = array(
+            'name="'.$param['name'].'"',
+            'type="'.$param['type'].'"'
+        );
 
-        $map = array();
-        foreach ($this->metadata->getChildren() as $index => $children) {
+        $code = array(
+            '@'.$this->prefix.'\DiscriminatorColumn('.implode(', ', $column).')',
+            '@'.$this->prefix.'\DiscriminatorMap({',
+            '<spaces>"'.strtolower($name).'" = "'.$namespace.'",'
+        );
+
+        foreach ($this->metadata->getChildren() as $children) {
             $name = $children->getName();
             $namespace = $children->getNamespace().'\\'.$name;
 
-            $map[] = ' * <spaces>"'.strtolower($name).'" = "'.$namespace.'",';
+            $code[] = '<spaces>"'.strtolower($name).'" = "'.$namespace.'",';
         }
-        $last = $map[count($map)-1];
-        $map[count($map)-1] = substr($last, 0, -1);
+        $code[count($code)-1] = substr(end($code), 0, -1);
 
-        if ($map) {
-            $name = $this->metadata->getName();
-            $namespace = $this->metadata->getNamespace().'\\'.$name;
+        $code[] = '})';
 
-            $code[] = ' * @'.$this->prefix.'\DiscriminatorMap({';
-            $code[] = ' * <spaces>"'.strtolower($name).'" = "'.$namespace.'",';
-            $code[] = implode("\n", $map);
-            $code[] = ' * })';
-        }
-
-        return implode("\n", $code);
+        return $code;
     }
 
     public function generateChangeTrackingPolicyClassAnnotations()
@@ -73,11 +93,37 @@ class ORMExtension extends GeneratorExtension
             return null;
         }
 
-        return ' * @'.$this->prefix.'\ChangeTrackingPolicy("'.$this->parameters['type'].'")';
+        return '@'.$this->prefix.'\ChangeTrackingPolicy("'.$this->parameters['type'].'")';
     }
 
     public function generateHasLifecycleCallbacksClassAnnotations()
     {
-        return ' * @'.$this->prefix.'\HasLifecycleCallbacks()';
+        return '@'.$this->prefix.'\HasLifecycleCallbacks()';
+    }
+
+    public function generateOneToManyAssociationFields(array $field)
+    {
+        if (
+            !isset($this->parameters['sourceEntity']) ||
+            $this->parameters['sourceEntity'] != $field['sourceEntity']
+        ) {
+            return null;
+        }
+
+        $code = array();
+        foreach ($this->parameters as $attr => $value) {
+            if ($attr == 'cascade') {
+                $cascades = array();
+                foreach (explode(',', $value) as $value) {
+                    $cascades[] = '"'.$value.'"';
+                }
+                $code[] = '<spaces>'.$attr.'={'.implode(', ', $cascades).'},';
+            } elseif (in_array($attr, array('orphanRemoval', 'fetch'))) {
+                $code[] = '<spaces>'.$attr.'="'.$value.'",';
+            }
+        }
+        $code[count($code)-1] = substr(end($code), 0, -1);
+
+        return $code;
     }
 }

@@ -50,14 +50,32 @@ class Generator
 
     protected function generateAnnotations()
     {
-        $code[] = '/*';
-        $code[] = ' * This file is generate by DiaBundle for smyfony package';
-        $code[] = ' *';
-        $code[] = ' * (c) Olivier Chauvel <olchauvel@gmail.com>';
-        $code[] = ' * ';
-        $code[] = ' * For the full copyright and license information, please view the LICENSE';
-        $code[] = ' * file that was distributed with this source code.';
-        $code[] = ' */';
+        return $this->generateAnnotation(array(
+            'This file is generate by DiaBundle for symfony package',
+            '',
+            '(c) Olivier Chauvel <olchauvel@gmail.com>',
+            '',
+            'For the full copyright and license information, please view the LICENSE',
+            'file that was distributed with this source code.'
+        ), '', '/*');
+    }
+
+    protected function generateField($name, array $annotations)
+    {
+        $code[] = $this->generateAnnotation($annotations, '<spaces>');
+        $code[] = '<spaces>protected $'.$name.';';
+        $code[] = '';
+
+        return implode("\n", $code);
+    }
+
+    protected function generateAnnotation(array $annotations, $spaces = '', $first = '/**')
+    {
+        $code[] = $spaces.$first;
+        foreach ($annotations as $annotation) {
+            $code[] = $spaces.' * '.$annotation;
+        }
+        $code[] = $spaces.' */';
 
         return implode("\n", $code);
     }

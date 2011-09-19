@@ -39,11 +39,17 @@ class EntityGenerator extends Generator
         $code[] = $this->generateClassAnnotations($metadata);
         $code[] = $this->generateClassName($metadata);
         $code[] = '{';
-        $code[] = $this->generateClassFields($metadata);
-        $code[] = $this->generateClassAssociationFields($metadata);
+
+        if ($fields = $this->generateClassFields($metadata)) {
+            $code[] = $fields;
+        }
+        if ($associations = $this->generateClassAssociationFields($metadata)) {
+            $code[] = $associations;
+        }
+
         $code[] = '}';
 
-        return implode("\n", $code);
+        return implode("\n", str_replace('<spaces>', $this->getSpaces(), $code));
     }
 
     protected function generateNamespace(ClassMetadataInfo $metadata)
@@ -65,25 +71,35 @@ class EntityGenerator extends Generator
 
     protected function generateClassAnnotations(ClassMetadataInfo $metadata)
     {
-        $code[] = '/**';
-        $code[] = ' * '.$metadata->getNamespace().'\\'.$metadata->getName();
-        $code[] = ' *';
+        $annotations = array(
+            $metadata->getNamespace().'\\'.$metadata->getName(),
+            ''
+        );
 
         if (!$metadata->isMappedSuperclass()) {
-            $table = $metadata->getTableName();
             $repository = $metadata->getNamespace().'\\Repository\\'.$metadata->getName();
 
-            $code[] = ' * @'.$this->prefix.'\Table('.($table?'name="'.$table.'"':'').')';
-            $code[] = ' * @'.$this->prefix.'\Entity('.($repository?'repositoryClass="'.$repository.'"':'').')';
+            $annotations[] = '@'.$this->prefix.'\table(';
+            $annotations[] = '<spaces>name="'.$metadata->getTableName().'",';
+
+            if ($extension = $this->generateExtension($metadata, 'ClassTable')) {
+                foreach ($extension as $annotation) {
+                    $annotations[] = '<spaces>'.$annotation.',';
+                }
+            }
+            $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
+
+            $annotations[] = ')';
+            $annotations[] = '@'.$this->prefix.'\Entity(';
+            $annotations[] = '<spaces>repositoryClass="'.$repository.'"';
+            $annotations[] = ')';
         }
 
         if ($extension = $this->generateExtension($metadata, 'ClassAnnotations')) {
-            $code[] = $extension;
+            $annotations = array_merge($annotations, $extension);
         }
 
-        $code[] = ' */';
-
-        return implode("\n", $code);
+        return $this->generateAnnotation($annotations);
     }
 
     protected function generateClassName(ClassMetadataInfo $metadata)
@@ -96,7 +112,6 @@ class EntityGenerator extends Generator
 
     protected function generateClassFields(ClassMetadataInfo $metadata)
     {
-        $spaces = $this->getSpaces();
         $code = array();
         foreach ($metadata->getFields() as $field) {
             $params = array();
@@ -135,14 +150,19 @@ class EntityGenerator extends Generator
                 }
             }
 
-            $last = $attributes[count($attributes)-1];
-            $attributes[count($attributes)-1] = substr($last, 0, -1);
-
             $annotations = array_merge(array(
                 '@var '.$association['targetEntity'].' $'.$association['fieldName'],
                 '',
                 '@'.$this->prefix.'\\'.$association['type'].'('
             ), $attributes);
+
+            if ($extension = $this->generateExtension($metadata, 'AssociationFields', $association)) {
+                $annotations = array_merge($annotations, $extension);
+            } else {
+                $last = $annotations[count($annotations)-1];
+                $annotations[count($annotations)-1] = substr($last, 0, -1);
+            }
+
             $annotations[] = ')';
 
             $code[] = $this->generateField($association['fieldName'], $annotations);
@@ -151,32 +171,23 @@ class EntityGenerator extends Generator
         return implode("\n", $code);
     }
 
-    protected function generateField($name, array $annotations)
-    {
-        $spaces = $this->getSpaces();
-
-        $code[] = $spaces.'/**';
-
-        foreach ($annotations as $annotation) {
-            $code[] = $spaces.' * '.$annotation;
-        }
-
-        $code[] = $spaces.' */';
-        $code[] = $spaces.'protected $'.$name.';';
-        $code[] = '';
-
-        return implode("\n", str_replace('<spaces>', $spaces, $code));
-    }
-
-    protected function generateExtension(ClassMetadataInfo $metadata, $type)
+    protected function generateExtension(ClassMetadataInfo $metadata, $type, $field = null)
     {
         $code = array();
-        foreach ($metadata->getExtensions() as $name => $generator) {
-            if (method_exists($generator, 'generate'.$name.$type)) {
-                $code[] = $generator->{'generate'.$name.$type}();
+        foreach ($metadata->getExtensions() as $name => $generators) {
+            foreach ($generators as $generator) {
+                if (method_exists($generator, 'generate'.$name.$type)) {
+                    if ($value = $generator->{'generate'.$name.$type}($field?$field:null)) {
+                        if (is_array($value)) {
+                            $code = array_merge($code, $value);
+                        } else {
+                            $code[] = $value;
+                        }
+                    }
+                }
             }
         }
 
-        return implode("\n", str_replace('<spaces>', $this->getSpaces(), $code));
+        return $code;
     }
 }
