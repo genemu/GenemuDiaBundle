@@ -11,6 +11,8 @@
 
 namespace Genemu\Bundle\DiaBundle\Mapping;
 
+use Genemu\Bundle\DiaBundle\Generator\Extension\GeneratorExtension;
+
 /**
  * @author Olivier Chauvel <olchauvel@gmail.com>
  */
@@ -20,7 +22,9 @@ class ClassMetadataInfo
     protected $name;
     protected $path;
     protected $parent;
+    protected $children;
     protected $namespace;
+    protected $extensions;
     protected $uses;
     protected $tableName;
     protected $isMappedSuperclass;
@@ -33,18 +37,24 @@ class ClassMetadataInfo
         $this->name = $name;
         $this->path = $path;
 
+        $this->extensions = array();
         $this->fields = array();
         $this->associations = array();
         $this->addUse('Doctrine\ORM\Mapping', 'ORM');
     }
 
-    public function setParent($parent)
+    public function setParent(ClassMetadataInfo $parent)
     {
         $this->parent = $parent;
 
         if ($this->namespace != $parent->getNamespace()) {
             $this->addUse($parent->getNamespace().'\\'.$parent->getName(), $parent->getName());
         }
+    }
+
+    public function addChildren(ClassMetadataInfo $children)
+    {
+        $this->children[$children->getName()] = $children;
     }
 
     public function setNamespace($namespace)
@@ -60,6 +70,11 @@ class ClassMetadataInfo
     public function setMappedSuperclass($boolean)
     {
         $this->isMappedSuperclass = $boolean;
+    }
+
+    public function addExtension($type, GeneratorExtension $generator)
+    {
+        $this->extensions[$type] = $generator;
     }
 
     public function addUse($mapping, $prefix)
@@ -84,6 +99,11 @@ class ClassMetadataInfo
         return $this->parent;
     }
 
+    public function getChildren()
+    {
+        return $this->children;
+    }
+
     public function getName()
     {
         return $this->name;
@@ -92,6 +112,11 @@ class ClassMetadataInfo
     public function getNamespace()
     {
         return $this->namespace;
+    }
+
+    public function getExtensions()
+    {
+        return $this->extensions;
     }
 
     public function getUses()
@@ -114,28 +139,61 @@ class ClassMetadataInfo
         return $this->associations;
     }
 
+    protected function getAttributes($value)
+    {
+        preg_match_all('/(.*)\((.*)\)/', $value, $matches);
+
+        $type = isset($matches[1][0])?$matches[1][0]:$value;
+        $length = isset($matches[2][0])?$matches[2][0]:null;
+
+        return array($type, $length);
+    }
+
     public function addField(array $attributes)
     {
         $types = explode(' ', $attributes['type']);
-        $type = $types[0];
-
-        preg_match_all('/(.*)\((.*)\)/', $type, $matches);
 
         $name = $attributes['name'];
         $default = $attributes['default'];
         $column = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $name));
-        $type = isset($matches[1][0])?$matches[1][0]:$type;
-        $length = isset($matches[2][0])?$matches[2][0]:null;
 
-        $field = array(
-            'fieldName' => $name,
-            'type' => ($type != 'primaryKey')?$type:'integer'
-        );
+        $field = array('fieldName' => $name);
 
-        if ($type == 'primaryKey') {
-            $field['id'] = true;
-        } elseif ($type == 'datetime') {
-            $field['type_int'] = '\\DateTime';
+        foreach ($types as $type) {
+            $attr = $this->getAttributes($type);
+
+            if ($attr[0] == 'scale') {
+                $field['scale'] = $attr[1];
+            } elseif ($attr[0] == 'precision') {
+                $field['precision'] = $attr[1];
+            } elseif (in_array($attr[0], array(
+                'string',
+                'integer',
+                'smallint',
+                'bigint',
+                'boolean',
+                'decimal',
+                'date',
+                'time',
+                'datetime',
+                'text',
+                'object',
+                'array',
+                'float'
+            ))) {
+                $field['type'] = $attr[0];
+
+                if ($attr[0] == 'datetime') {
+                    $field['type_int'] = '\\DateTime';
+                }
+
+                if ($attr[1]) {
+                    $field['length'] = $attr[1];
+                }
+            } elseif ($attr[0] == 'primaryKey') {
+                $field['type'] = 'integer';
+                $field['id'] = true;
+            }
         }
 
         if ($name != $column) {
@@ -144,10 +202,6 @@ class ClassMetadataInfo
 
         if ($default) {
             $field['default'] = $default;
-        }
-
-        if ($length) {
-            $field['length'] = $length;
         }
 
         if (!in_array('NOTNULL', $types) && $type != 'primaryKey') {

@@ -117,6 +117,8 @@ class DiaEngine
                         if (method_exists($generator, 'init'.$name)) {
                             $generator->{'init'.$name}();
                         }
+
+                        $class->addExtension($name, $generator);
                     }
                 }
             }
@@ -131,6 +133,7 @@ class DiaEngine
             $connect = $general->getConnection($this->classes);
 
             $connect['to']->setParent($connect['from']);
+            $connect['from']->addChildren($connect['to']);
         }
 
         /**

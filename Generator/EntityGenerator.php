@@ -40,7 +40,7 @@ class EntityGenerator extends Generator
         $code[] = $this->generateClassName($metadata);
         $code[] = '{';
         $code[] = $this->generateClassFields($metadata);
-        $code[] = $this->generateClassAssociations($metadata);
+        $code[] = $this->generateClassAssociationFields($metadata);
         $code[] = '}';
 
         return implode("\n", $code);
@@ -69,14 +69,16 @@ class EntityGenerator extends Generator
         $code[] = ' * '.$metadata->getNamespace().'\\'.$metadata->getName();
         $code[] = ' *';
 
-        if ($metadata->isMappedSuperclass()) {
-            $code[] = ' * @'.$this->prefix.'\MappedSuperclass()';
-        } else {
+        if (!$metadata->isMappedSuperclass()) {
             $table = $metadata->getTableName();
             $repository = $metadata->getNamespace().'\\Repository\\'.$metadata->getName();
 
             $code[] = ' * @'.$this->prefix.'\Table('.($table?'name="'.$table.'"':'').')';
             $code[] = ' * @'.$this->prefix.'\Entity('.($repository?'repositoryClass="'.$repository.'"':'').')';
+        }
+
+        if ($extension = $this->generateExtension($metadata, 'ClassAnnotations')) {
+            $code[] = $extension;
         }
 
         $code[] = ' */';
@@ -121,7 +123,7 @@ class EntityGenerator extends Generator
         return implode("\n", $code);
     }
 
-    protected function generateClassAssociations(ClassMetadataInfo $metadata)
+    protected function generateClassAssociationFields(ClassMetadataInfo $metadata)
     {
         $code = array();
         foreach ($metadata->getAssociations() as $association) {
@@ -164,5 +166,17 @@ class EntityGenerator extends Generator
         $code[] = '';
 
         return implode("\n", str_replace('<spaces>', $spaces, $code));
+    }
+
+    protected function generateExtension(ClassMetadataInfo $metadata, $type)
+    {
+        $code = array();
+        foreach ($metadata->getExtensions() as $name => $generator) {
+            if (method_exists($generator, 'generate'.$name.$type)) {
+                $code[] = $generator->{'generate'.$name.$type}();
+            }
+        }
+
+        return implode("\n", str_replace('<spaces>', $this->getSpaces(), $code));
     }
 }
