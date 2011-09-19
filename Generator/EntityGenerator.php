@@ -46,6 +46,9 @@ class EntityGenerator extends Generator
         if ($associations = $this->generateClassAssociationFields($metadata)) {
             $code[] = $associations;
         }
+        if ($construct = $this->generateClassConstruct($metadata)) {
+            $code[] = $construct;
+        }
 
         $code[] = '}';
 
@@ -158,10 +161,8 @@ class EntityGenerator extends Generator
 
             if ($extension = $this->generateExtension($metadata, 'AssociationFields', $association)) {
                 $annotations = array_merge($annotations, $extension);
-            } else {
-                $last = $annotations[count($annotations)-1];
-                $annotations[count($annotations)-1] = substr($last, 0, -1);
             }
+            $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
 
             $annotations[] = ')';
 
@@ -169,6 +170,25 @@ class EntityGenerator extends Generator
         }
 
         return implode("\n", $code);
+    }
+
+    protected function generateClassConstruct(ClassMetadataInfo $metadata)
+    {
+        $code = array();
+
+        foreach ($metadata->getFields() as $field) {
+            if (isset($field['default']) && $field['default']) {
+                $code[] = '$this->'.$field['fieldName'].' = '.$field['default'].';';
+            }
+        }
+
+        foreach ($metadata->getAssociations() as $association) {
+            if (in_array($association['type'], array('ManyToMany', 'OneToMany'))) {
+                $code[] = '$this->'.$association['fieldName'].' = new ArrayCollection();';
+            }
+        }
+
+        return ($code)?$this->generateMethod('__construct', array('Construct'), array(), $code):null;
     }
 
     protected function generateExtension(ClassMetadataInfo $metadata, $type, $field = null)

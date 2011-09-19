@@ -122,7 +122,6 @@ class ORMExtension extends GeneratorExtension
                 $code[] = '<spaces>'.$attr.'="'.$value.'",';
             }
         }
-        $code[count($code)-1] = substr(end($code), 0, -1);
 
         return $code;
     }

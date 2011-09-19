@@ -31,7 +31,7 @@ file is usually located at `app/AppKernel`:
     {
         $bundles = array(
             // ...
-            new Genemu\Bundle\FormBundle\GenemuDiaBundle(),
+            new Genemu\Bundle\DiaBundle\GenemuDiaBundle(),
         );
     )
 

@@ -62,11 +62,11 @@ class Generator
 
     protected function generateField($name, array $annotations)
     {
-        $code[] = $this->generateAnnotation($annotations, '<spaces>');
-        $code[] = '<spaces>protected $'.$name.';';
-        $code[] = '';
-
-        return implode("\n", $code);
+        return implode("\n", array(
+            $this->generateAnnotation($annotations, '<spaces>'),
+            '<spaces>protected $'.$name.';',
+            ''
+        ));
     }
 
     protected function generateAnnotation(array $annotations, $spaces = '', $first = '/**')
@@ -76,6 +76,24 @@ class Generator
             $code[] = $spaces.' * '.$annotation;
         }
         $code[] = $spaces.' */';
+
+        return implode("\n", $code);
+    }
+
+    protected function generateMethod($name, array $annotations, array $parameters, array $contents)
+    {
+        $code = array(
+            $this->generateAnnotation($annotations, '<spaces>'),
+            '<spaces>public function '.$name.'('.implode(', ', $parameters).')',
+            '<spaces>{'
+        );
+
+        foreach ($contents as $content) {
+            $code[] = $content?'<spaces><spaces>'.$content:'';
+        }
+
+        $code[] = '<spaces>}';
+        $code[] = '';
 
         return implode("\n", $code);
     }
