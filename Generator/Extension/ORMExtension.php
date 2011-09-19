@@ -16,11 +16,19 @@ namespace Genemu\Bundle\DiaBundle\Generator\Extension;
  */
 class ORMExtension extends GeneratorExtension
 {
+    /**
+     * Initialization metadata to extension MappedSuperclass
+     */
     public function initMappedSuperclass()
     {
         $this->metadata->setMappedSuperclass(true);
     }
 
+    /**
+     * Generate annotation Index to Entity
+     *
+     * @return string
+     */
     public function generateIndexClassTable()
     {
         if (!isset($this->parameters['name']) || !isset($this->parameters['columns'])) {
@@ -40,11 +48,21 @@ class ORMExtension extends GeneratorExtension
         return 'indexes={@'.$this->prefix.'\Index('.implode(', ', $params).')}';
     }
 
+    /**
+     * Generate annotation MappedSuperclass to Entity
+     *
+     * @return string
+     */
     public function generateMappedSuperclassClassAnnotations()
     {
         return '@'.$this->prefix.'\MappedSuperclass()';
     }
 
+    /**
+     * Generate annotation InheritanceType to Entity
+     *
+     * @return string
+     */
     public function generateInheritanceTypeClassAnnotations()
     {
         if (!isset($this->parameters['type'])) {
@@ -54,6 +72,11 @@ class ORMExtension extends GeneratorExtension
         return '@'.$this->prefix.'\InheritanceType("'.$this->parameters['type'].'")';
     }
 
+    /**
+     * Generate annotation DiscriminatorColumn and DiscriminatorMap to Entity
+     *
+     * @return string
+     */
     public function generateDiscriminatorColumnClassAnnotations()
     {
         $param = array_replace(array(
@@ -87,6 +110,11 @@ class ORMExtension extends GeneratorExtension
         return $code;
     }
 
+    /**
+     * Generate annotation ChangeTrackingPolicy to Entity
+     *
+     * @return string
+     */
     public function generateChangeTrackingPolicyClassAnnotations()
     {
         if (!isset($this->parameters['type'])) {
@@ -96,11 +124,21 @@ class ORMExtension extends GeneratorExtension
         return '@'.$this->prefix.'\ChangeTrackingPolicy("'.$this->parameters['type'].'")';
     }
 
+    /**
+     * Generate annotation HasLifecycleCallbacks to Entity
+     *
+     * @return string
+     */
     public function generateHasLifecycleCallbacksClassAnnotations()
     {
         return '@'.$this->prefix.'\HasLifecycleCallbacks()';
     }
 
+    /**
+     * Generate annotations association OneToMany to Entity
+     *
+     * @return string
+     */
     public function generateOneToManyAssociationFields(array $field)
     {
         if (

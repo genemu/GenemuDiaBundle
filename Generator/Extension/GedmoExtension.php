@@ -18,6 +18,9 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
  */
 class GedmoExtension extends GeneratorExtension
 {
+    /**
+     * Generate annotation Tree to Entty
+     */
     public function generateTreeClassAnnotations()
     {
         return '@'.$this->prefix.'\Tree(type="nested")';

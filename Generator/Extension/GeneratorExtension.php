@@ -16,12 +16,19 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
 /**
  * @author Olivier Chauvel <olchauvel@gmail.com>
  */
-class GeneratorExtension
+abstract class GeneratorExtension
 {
     protected $metadata;
     protected $prefix;
     protected $parameters;
 
+    /**
+     * Construct
+     *
+     * @param ClassMetdataInfo $metadata
+     * @param string           $prefix
+     * @param array            $parameters
+     */
     public function __construct(ClassMetadataInfo $metadata, $prefix, array $parameters)
     {
         $this->metadata = $metadata;

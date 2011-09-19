@@ -18,6 +18,11 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
  */
 class EntityGenerator extends Generator
 {
+    /**
+     * Generate file Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     */
     public function generateEntity(ClassMetadataInfo $metadata)
     {
         $path = $metadata->getPath();
@@ -26,6 +31,13 @@ class EntityGenerator extends Generator
         $this->generate($name, $path, $this->generateEntityClass($metadata));
     }
 
+    /**
+     * Generate content file
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $content
+     */
     protected function generateEntityClass(ClassMetadataInfo $metadata)
     {
         $code[] = '<?php';
@@ -55,11 +67,25 @@ class EntityGenerator extends Generator
         return implode("\n", str_replace('<spaces>', $this->getSpaces(), $code));
     }
 
+    /**
+     * Generate namepsace to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $namespace
+     */
     protected function generateNamespace(ClassMetadataInfo $metadata)
     {
         return 'namespace '.$metadata->getNamespace().';';
     }
 
+    /**
+     * Generate uses to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $uses
+     */
     protected function generateUses(ClassMetadataInfo $metadata)
     {
         $code = array();
@@ -72,6 +98,13 @@ class EntityGenerator extends Generator
         return implode("\n", $code);
     }
 
+    /**
+     * Generate annotations class to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $annotations
+     */
     protected function generateClassAnnotations(ClassMetadataInfo $metadata)
     {
         $annotations = array(
@@ -105,6 +138,13 @@ class EntityGenerator extends Generator
         return $this->generateAnnotation($annotations);
     }
 
+    /**
+     * Generate class name to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $className
+     */
     protected function generateClassName(ClassMetadataInfo $metadata)
     {
         $abstract = $metadata->isAbstract()?'abstract ':'';
@@ -113,6 +153,13 @@ class EntityGenerator extends Generator
         return $abstract.'class '.$metadata->getName().$parent;
     }
 
+    /**
+     * Generate fields to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $fields
+     */
     protected function generateClassFields(ClassMetadataInfo $metadata)
     {
         $code = array();
@@ -141,6 +188,13 @@ class EntityGenerator extends Generator
         return implode("\n", $code);
     }
 
+    /**
+     * Generate associations fields to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $associationFields
+     */
     protected function generateClassAssociationFields(ClassMetadataInfo $metadata)
     {
         $code = array();
@@ -172,6 +226,13 @@ class EntityGenerator extends Generator
         return implode("\n", $code);
     }
 
+    /**
+     * Generate method __construct to Entity
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $methodConstruct
+     */
     protected function generateClassConstruct(ClassMetadataInfo $metadata)
     {
         $code = array();
@@ -191,6 +252,17 @@ class EntityGenerator extends Generator
         return ($code)?$this->generateMethod('__construct', array('Construct'), array(), $code):null;
     }
 
+    /**
+     * Generate extensions to Entity
+     * Generate annotations class and fields
+     * Generate fields and methods
+     *
+     * @param ClassMetadataInfo $metadata
+     * @param string            $type
+     * @param array/null        $field
+     *
+     * @return array $extensions
+     */
     protected function generateExtension(ClassMetadataInfo $metadata, $type, $field = null)
     {
         $code = array();
