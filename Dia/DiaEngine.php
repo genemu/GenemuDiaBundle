@@ -24,12 +24,23 @@ class DiaEngine
     protected $xml;
     protected $classes;
 
+    /**
+     * Construct
+     *
+     * @param Kernel   $kernel
+     * @param Registry $registry
+     */
     public function __construct($kernel, $registry)
     {
         $this->kernel = $kernel;
         $this->registry = $registry;
     }
 
+    /**
+     * Load file dia
+     *
+     * @param string $file
+     */
     public function loadFile($file)
     {
         $zd = gzopen($file, 'r');
@@ -39,17 +50,30 @@ class DiaEngine
         $this->xml = new DiaXML($contents);
     }
 
+    /**
+     * Set extensions
+     *
+     * @param array $extensions
+     */
     public function setExtensions(array $extensions)
     {
         $this->extensions = $extensions;
     }
 
+    /**
+     * Get classes
+     *
+     * @return array $classes
+     */
     public function getClasses()
     {
         if ($this->classes) {
             return $this->classes;
         }
 
+        /**
+         * Search all class to xml document
+         */
         foreach ($this->xml->getClasses() as $element) {
             $name = $element->getName();
             $abstract = $element->isAbstract();
@@ -63,6 +87,9 @@ class DiaEngine
             $class->setNamespace($this->registry->getEntityNamespace($bundle->getName()));
             $class->setTableName($prefix.'_'.strtolower($name));
 
+            /**
+             * Search attributes to class
+             */
             foreach ($element->getAttributes() as $attribute) {
                 $class->addField(array(
                     'name' => $attribute->getName(),
@@ -71,6 +98,9 @@ class DiaEngine
                 ));
             }
 
+            /**
+             * Search extensions to class
+             */
             foreach ($element->getOperations() as $operation) {
                 $name = $operation->getName();
 
@@ -94,10 +124,30 @@ class DiaEngine
             $this->classes[$element->getId()] = $class;
         }
 
+        /**
+         * Search parent class
+         */
         foreach ($this->xml->getGeneralization() as $general) {
             $connect = $general->getConnection($this->classes);
 
             $connect['to']->setParent($connect['from']);
+        }
+
+        /**
+         * Search associations
+         */
+        foreach ($this->xml->getAssociations() as $association) {
+            $connect = $association->getConnection($this->classes, 'association');
+            $name = $association->getName();
+
+            switch ($association->getAssocType()) {
+                case 0:
+                    $connect['from']->addManyToMany($connect['to']);
+                    break;
+                case 1:
+                    $connect['from']->addOneToMany($connect['to'], $name);
+                    break;
+            }
         }
 
         return $this->classes;

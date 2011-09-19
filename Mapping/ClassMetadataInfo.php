@@ -25,6 +25,7 @@ class ClassMetadataInfo
     protected $tableName;
     protected $isMappedSuperclass;
     protected $fields;
+    protected $associations;
 
     public function __construct($name, $path, $abstract = false)
     {
@@ -33,6 +34,7 @@ class ClassMetadataInfo
         $this->path = $path;
 
         $this->fields = array();
+        $this->associations = array();
         $this->addUse('Doctrine\ORM\Mapping', 'ORM');
     }
 
@@ -107,6 +109,11 @@ class ClassMetadataInfo
         return $this->path;
     }
 
+    public function getAssociations()
+    {
+        return $this->associations;
+    }
+
     public function addField(array $attributes)
     {
         $types = explode(' ', $attributes['type']);
@@ -152,6 +159,45 @@ class ClassMetadataInfo
         }
 
         $this->fields[$name] = $field;
+    }
+
+    public function addAssociation($name, array $attributes)
+    {
+        $this->associations[$name] = $attributes;
+    }
+
+    public function addOneToMany(ClassMetadataInfo $class, $name = null)
+    {
+        $this->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
+
+        $nameFrom = strtolower($name?$name:$this->name);
+        $nameTo = strtolower($name?$name:$class->getName()).'s';
+        $targetFrom = $this->namespace.'\\'.$this->name;
+        $targetTo = $class->getNamespace().'\\'.$class->getName();
+
+        if ($this->namespace != $class->getNamespace()) {
+            $this->addUse($targetTo, $class->getName());
+            $class->addUse($targetFrom, $this->name);
+        }
+
+        $this->addAssociation($nameTo, array(
+            'type' => 'OneToMany',
+            'fieldName' => $nameTo,
+            'targetEntity' => $targetTo,
+            'mappedBy' => $nameFrom
+        ));
+
+        $class->addAssociation($nameFrom, array(
+            'type' => 'ManyToOne',
+            'fieldName' => $nameFrom,
+            'targetEntity' => $targetFrom,
+            'inversedBy' => $nameTo
+        ));
+    }
+
+    public function addManyToMany(ClassMetadataInfo $class)
+    {
+
     }
 
     public function getFields()

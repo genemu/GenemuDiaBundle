@@ -40,6 +40,7 @@ class EntityGenerator extends Generator
         $code[] = $this->generateClassName($metadata);
         $code[] = '{';
         $code[] = $this->generateClassFields($metadata);
+        $code[] = $this->generateClassAssociations($metadata);
         $code[] = '}';
 
         return implode("\n", $code);
@@ -103,21 +104,65 @@ class EntityGenerator extends Generator
                 }
             }
 
-            $code[] = $spaces.'/**';
-            $code[] = $spaces.' * @var '.$field['type'].' $'.$field['fieldName'];
-            $code[] = $spaces.' *';
-            $code[] = $spaces.' * @'.$this->prefix.'\Column('.implode(', ', $params).')';
+            $annotations = array(
+                '@var '.$field['type'].' $'.$field['fieldName'],
+                '',
+                '@'.$this->prefix.'\Column('.implode(', ', $params).')'
+            );
 
             if (isset($field['id']) && $field['id']) {
-                $code[] = $spaces.' * @'.$this->prefix.'\Id';
-                $code[] = $spaces.' * @'.$this->prefix.'\GeneratedValue(strategy="AUTO")';
+                $annotations[] = '@'.$this->prefix.'\Id';
+                $annotations[] = '@'.$this->prefix.'\GeneratedValue(strategy="AUTO")';
             }
 
-            $code[] = $spaces.' */';
-            $code[] = $spaces.'protected $'.$field['fieldName'].';';
-            $code[] = '';
+            $code[] = $this->generateField($field['fieldName'], $annotations);
         }
 
         return implode("\n", $code);
+    }
+
+    protected function generateClassAssociations(ClassMetadataInfo $metadata)
+    {
+        $code = array();
+        foreach ($metadata->getAssociations() as $association) {
+
+            $attributes = array();
+            foreach ($association as $attr => $value) {
+                if (in_array($attr, array('targetEntity', 'mappedBy', 'inversedBy'))) {
+                    $attributes[] = '<spaces>'.$attr.'="'.$value.'",';
+                }
+            }
+
+            $last = $attributes[count($attributes)-1];
+            $attributes[count($attributes)-1] = substr($last, 0, -1);
+
+            $annotations = array_merge(array(
+                '@var '.$association['targetEntity'].' $'.$association['fieldName'],
+                '',
+                '@'.$this->prefix.'\\'.$association['type'].'('
+            ), $attributes);
+            $annotations[] = ')';
+
+            $code[] = $this->generateField($association['fieldName'], $annotations);
+        }
+
+        return implode("\n", $code);
+    }
+
+    protected function generateField($name, array $annotations)
+    {
+        $spaces = $this->getSpaces();
+
+        $code[] = $spaces.'/**';
+
+        foreach ($annotations as $annotation) {
+            $code[] = $spaces.' * '.$annotation;
+        }
+
+        $code[] = $spaces.' */';
+        $code[] = $spaces.'protected $'.$name.';';
+        $code[] = '';
+
+        return implode("\n", str_replace('<spaces>', $spaces, $code));
     }
 }
