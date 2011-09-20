@@ -87,6 +87,11 @@ class DiaEngine
             $class->setNamespace($this->registry->getEntityNamespace($bundle->getName()));
             $class->setTableName($prefix.'_'.strtolower($name));
 
+            $generator = new $this->extensions['ORM']['generator']($class, 'ORM');
+            $class->addExtension('Annotations', $generator);
+            $class->addExtension('Fields', $generator);
+            $class->addExtension('Methods', $generator);
+
             /**
              * Search attributes to class
              */
@@ -96,31 +101,6 @@ class DiaEngine
                     'type' => $attribute->getType(),
                     'default' => $attribute->getValue()
                 ));
-            }
-
-            /**
-             * Search extensions to class
-             */
-            foreach ($element->getOperations() as $operation) {
-                $name = $operation->getName();
-
-                $parameters = array();
-                foreach ($operation->getParameters() as $parameter) {
-                    $parameters[$parameter->getName()] = $parameter->getType();
-                }
-
-                foreach ($this->extensions as $prefix => $extension) {
-                    if (in_array($name, $extension['types'])) {
-                        $class->addUse($extension['namespace'], $prefix);
-
-                        $generator = new $extension['generator']($class, $prefix, $parameters);
-                        if (method_exists($generator, 'init'.$name)) {
-                            $generator->{'init'.$name}();
-                        }
-
-                        $class->addExtension($name, $generator);
-                    }
-                }
             }
 
             $this->classes[$element->getId()] = $class;
@@ -150,6 +130,35 @@ class DiaEngine
                 case 1:
                     $connect['from']->addOneToMany($connect['to'], $name);
                     break;
+            }
+        }
+
+        foreach ($this->xml->getClasses() as $element) {
+            $class = $this->classes[$element->getId()];
+
+            /**
+             * Search extensions to class
+             */
+            foreach ($element->getOperations() as $operation) {
+                $name = $operation->getName();
+
+                $parameters = array();
+                foreach ($operation->getParameters() as $parameter) {
+                    $parameters[$parameter->getName()] = $parameter->getType();
+                }
+
+                foreach ($this->extensions as $prefix => $extension) {
+                    if (in_array($name, $extension['types'])) {
+                        $class->addUse($extension['namespace'], $prefix);
+
+                        $generator = new $extension['generator']($class, $prefix, $parameters);
+                        if (method_exists($generator, 'init'.$name)) {
+                            $generator->{'init'.$name}();
+                        }
+
+                        $class->addExtension($name, $generator);
+                    }
+                }
             }
         }
 

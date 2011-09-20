@@ -26,7 +26,8 @@ class ClassMetadataInfo
     protected $namespace;
     protected $extensions;
     protected $uses;
-    protected $tableName;
+    protected $table;
+    protected $annotations;
     protected $isMappedSuperclass;
     protected $fields;
     protected $associations;
@@ -45,6 +46,11 @@ class ClassMetadataInfo
         $this->name = $name;
         $this->path = $path;
 
+        $this->table = array(
+            'name' => null,
+            'annotations' => array()
+        );
+        $this->annotations = array();
         $this->extensions = array();
         $this->fields = array();
         $this->associations = array();
@@ -92,7 +98,27 @@ class ClassMetadataInfo
      */
     public function setTableName($tableName)
     {
-        $this->tableName = $tableName;
+        $this->table['name'] = $tableName;
+    }
+
+    public function addTableAnnotation($annotation)
+    {
+        $this->table['annotations'][] = $annotation;
+    }
+
+    public function addAnnotation($annotation)
+    {
+        $this->annotations[] = $annotation;
+    }
+
+    public function addAnnotations(array $annotations)
+    {
+        $this->annotations = array_merge($this->annotations, $annotations);
+    }
+
+    public function getAnnotations()
+    {
+        return $this->annotations;
     }
 
     /**
@@ -193,6 +219,16 @@ class ClassMetadataInfo
         return $this->namespace;
     }
 
+    public function getTargetEntity()
+    {
+        return $this->namespace.'\\'.$this->name;
+    }
+
+    public function getRepositoryClass()
+    {
+        return $this->namespace.'\\Repository\\'.$this->name;
+    }
+
     /**
      * Get extensions
      *
@@ -201,6 +237,15 @@ class ClassMetadataInfo
     public function getExtensions()
     {
         return $this->extensions;
+    }
+
+    public function getExtension($name)
+    {
+        if (isset($this->extensions[$name])) {
+            return $this->extensions[$name];
+        }
+
+        return null;
     }
 
     /**
@@ -220,7 +265,12 @@ class ClassMetadataInfo
      */
     public function getTableName()
     {
-        return $this->tableName;
+        return $this->table['name'];
+    }
+
+    public function getTableAnnotations()
+    {
+        return $this->table['annotations'];
     }
 
     /**
@@ -248,7 +298,7 @@ class ClassMetadataInfo
      *
      * @return array $fields
      */
-    public function addField(array $attributes)
+    public function addField(array $attributes, array $methods = array('set', 'get'), array $annotations = array())
     {
         $types = explode(' ', $attributes['type']);
 
@@ -256,7 +306,11 @@ class ClassMetadataInfo
         $default = $attributes['default'];
         $column = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $name));
 
-        $field = array('fieldName' => $name);
+        $field = array(
+            'fieldName' => $name,
+            'methods' => $methods,
+            'annotations' => $annotations
+        );
 
         foreach ($types as $type) {
             preg_match_all('/(.*)\((.*)\)/', $type, $matches);
@@ -296,6 +350,7 @@ class ClassMetadataInfo
             } elseif ($attr[0] == 'primaryKey') {
                 $field['type'] = 'integer';
                 $field['id'] = true;
+                $field['methods'] = array('get');
             }
         }
 
@@ -318,15 +373,23 @@ class ClassMetadataInfo
         $this->fields[$name] = $field;
     }
 
+    public function updateField($name, array $parameters)
+    {
+        $this->fields[$name] = array_merge($this->fields[$name], $parameters);
+    }
+
     /**
      * Add association
      *
      * @param string $name
      * @param array  $attributes
      */
-    public function addAssociation($name, array $attributes)
+    public function addAssociation($name, array $attributes, array $methods, array $annotations = array())
     {
-        $this->associations[$name] = $attributes;
+        $this->associations[$name] = array_merge(array_merge(
+            $attributes,
+            array('methods' => $methods)
+        ), array('annotations' => $annotations));
     }
 
     /**
@@ -349,21 +412,20 @@ class ClassMetadataInfo
             $class->addUse($targetFrom, $this->name);
         }
 
-        $this->addAssociation($nameTo, array(
+        $this->addAssociation($class->getName(), array(
             'type' => 'OneToMany',
+            'type_int' => 'Doctrine\Common\Collections\ArrayCollection',
             'fieldName' => $nameTo,
             'targetEntity' => $targetTo,
-            'sourceEntity' => $class->getName(),
             'mappedBy' => $nameFrom
-        ));
+        ), array('add', 'get'));
 
-        $class->addAssociation($nameFrom, array(
+        $class->addAssociation($this->name, array(
             'type' => 'ManyToOne',
             'fieldName' => $nameFrom,
             'targetEntity' => $targetFrom,
-            'sourceEntity' => $this->name,
             'inversedBy' => $nameTo
-        ));
+        ), array('set', 'get'));
     }
 
     /**

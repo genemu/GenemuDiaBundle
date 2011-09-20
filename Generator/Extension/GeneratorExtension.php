@@ -30,7 +30,7 @@ abstract class GeneratorExtension
      * @param string           $prefix
      * @param array            $parameters
      */
-    public function __construct(ClassMetadataInfo $metadata, $prefix, array $parameters)
+    public function __construct(ClassMetadataInfo $metadata, $prefix, array $parameters = array())
     {
         $this->metadata = $metadata;
         $this->prefix = $prefix;
@@ -133,5 +133,36 @@ abstract class GeneratorExtension
         $code[] = '';
 
         return implode("\n", $code);
+    }
+
+    protected function generateMethodFields(array $methods, array $parameters)
+    {
+        $name = $parameters['name'];
+
+        $code = array();
+
+        foreach ($methods as $method) {
+            $return = '';
+            $annotation = '';
+            $params = array();
+
+            if ($method == 'get') {
+                $return = 'return $this->'.$name.';';
+                $annotation = '@return '.$parameters['type_int'].' $'.$name;
+            } else {
+                $return = '$this->'.$name.' = $'.$name.';';
+                $annotation = '@param '.$parameters['target'].' $'.$name;
+                $params = array($parameters['type'].' $'.$name);
+            }
+
+            $code[] = $this->generateMethod(
+                $method.ucfirst($name),
+                array($method.' '.$name, '', $annotation),
+                $params,
+                array($return)
+            );
+        }
+
+        return $code;
     }
 }

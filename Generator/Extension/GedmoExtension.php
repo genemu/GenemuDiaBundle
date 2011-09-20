@@ -19,200 +19,83 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
 class GedmoExtension extends GeneratorExtension
 {
     /**
-     * Init Tree
+     * Initialization Tree
      * Add use ArrayCollection
      */
     public function initTree()
     {
+        $target = $this->metadata->getTargetEntity();
+
         $this->metadata->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
-    }
-
-    /**
-     * Generate annotation Tree to Entity
-     *
-     * @return string $annotation
-     */
-    public function generateTreeClassAnnotations()
-    {
-        return '@'.$this->prefix.'\Tree(type="nested")';
-    }
-
-    /**
-     * Add method construct $children
-     *
-     * @return string $construct
-     */
-    public function generateTreeConstruct()
-    {
-        return '$this->children = new ArrayCollection();';
-    }
-
-    /**
-     * Generate fields Tree
-     *
-     * @return array $fields
-     */
-    public function generateTreeFields()
-    {
-        $target = $this->metadata->getNamespace().'\\'.$this->metadata->getName();
-        $code = array();
 
         foreach (array('Root' => 'root', 'Left' => 'lft', 'Right' => 'rgt', 'Level' => 'lvl') as $name => $field) {
-            $code[] = $this->generateField(
-                $field,
-                array(
-                    '@var integer $'.$field,
-                    '',
-                    '@'.$this->prefix.'\Tree'.$name.'()',
-                    '@'.$this->prefixO.'\Column(type="integer")'
-                )
+            $this->metadata->addField(
+                array('name' => $field, 'type' => 'integer NOTNULL', 'default' => null),
+                array('get'),
+                array('@'.$this->prefix.'\Tree'.$name.'()')
             );
         }
 
-        $code[] = $this->generateField(
-            'parent',
+        $this->metadata->addAssociation('parent',
             array(
-                '@var '.$target.' $parent',
-                '',
-                '@'.$this->prefix.'\TreeParent()',
-                '@'.$this->prefixO.'\ManyToOne(targetEntity="'.$target.'", inversedBy="children")'
-            )
+                'type' => 'ManyToOne',
+                'fieldName' => 'parent',
+                'targetEntity' => $target,
+                'sourceEntity' => $this->metadata->getName(),
+                'inversedBy' => 'children'
+            ),
+            array('set', 'get'),
+            array('@'.$this->prefix.'\TreeParent()')
         );
 
-        $code[] = $this->generateField(
-            'children',
+        $this->metadata->addAssociation('children',
             array(
-                '@var '.$target.' $children',
-                '',
-                '@'.$this->prefixO.'\OneToMany(targetEntity="'.$target.'", mappedBy="parent")',
-                '@'.$this->prefixO.'\OrderBy=({"lft" = "DESC"})'
-            )
-        );
-
-        return $code;
-    }
-
-    /**
-     * Generate methods Tree
-     *
-     * @return array $methods
-     */
-    public function generateTreeMethods()
-    {
-        $name = $this->metadata->getName();
-        $target = $this->metadata->getNamespace().'\\'.$name;
-        $code = array();
-
-        foreach (array('root', 'lft', 'rgt', 'lvl') as $method) {
-            $code[] = $this->generateMethod(
-                'get'.ucfirst($method),
-                array('get $'.$method, '', '@return integer $'.$method),
-                array(),
-                array('return $this->'.$method.';')
-            );
-        }
-
-        $code[] = $this->generateMethod(
-            'getParent',
-            array('get parent', '', '@return '.$target.' $parent'),
-            array(),
-            array('return $this->parent;')
-        );
-
-        $code[] = $this->generateMethod(
-            'getChildren',
-            array('get $children', '', '@return \Doctrine\Common\Collections\ArrayCollection $children'),
-            array(),
-            array('return $this->children;')
-        );
-
-        $code[] = $this->generateMethod(
-            'setParent',
-            array('set $parent', '', '@param '.$target.' $parent'),
-            array($name.' $parent'),
-            array('$this->parent = $parent;')
-        );
-
-        $code[] = $this->generateMethod(
-            'addChildren',
-            array('add $children', '', '@param '.$target.' $children'),
-            array($name.' $children'),
-            array('$this->children->add($children);')
-        );
-
-        return $code;
-    }
-
-    /**
-     * Generate fileds Timestampable
-     *
-     * @return array $fields
-     */
-    public function generateTimestampableFields()
-    {
-        return array(
-            $this->generateField(
-                'creadedAt',
-                array(
-                    '@var \DateTime $createdAt',
-                    '',
-                    '@'.$this->prefix.'\Timestampable(on="create")',
-                    '@'.$this->prefixO.'\Column(name="created_at", type="datetime")'
-                )
+                'type' => 'OneToMany',
+                'type_int' => 'Doctrine\Common\Collections\ArrayCollection',
+                'fieldName' => 'children',
+                'targetEntity' => $target,
+                'sourceEntity' => $this->metadata->getName(),
+                'mappedBy' => 'parent'
             ),
-            $this->generateField(
-                'updatedAt',
-                array(
-                    '@var \DateTime $updatedAt',
-                    '',
-                    '@'.$this->prefix.'\Timestampable(on="update")',
-                    '@'.$this->prefixO.'\Column(name="updated_at", type="datetime")'
-                )
-            )
+            array('add', 'get')
         );
     }
 
     /**
-     * Generate methods Timestampable
-     *
-     * @return array $methods
+     * Initialization Timestampable
      */
-    public function generateTimestampableMethods()
+    public function initTimestampable()
     {
-        return array(
-            $this->generateMethod(
-                'getCreatedAt',
-                array('get $createdAt', '', '@return \DateTime $createdAt'),
-                array(),
-                array('return $this->createdAt;')
-            ),
-            $this->generateMethod(
-                'getUpdatedAt',
-                array('get $updatedAt', '', '@return \DateTime $updatedAt'),
-                array(),
-                array('return $this->updatedAt;')
-            )
+        $this->metadata->addField(
+            array('name' => 'createdAt', 'type' => 'datetime NOTNULL', 'default' => null),
+            array('get'),
+            array('@'.$this->prefix.'\Timestampable(on="create")')
+        );
+
+        $this->metadata->addField(
+            array('name' => 'updatedAt', 'type' => 'datetime NOTNULL', 'default' => null),
+            array('get'),
+            array('@'.$this->prefix.'\Timestampable(on="update")')
         );
     }
 
-    public function generateSluggableAnnotationField()
-    {
-        if (!$this->isFieldExists()) {
-            return null;
-        }
-
-        return '@'.$this->prefix.'\Sluggable()';
-    }
-
-    public function generateSluggableFields()
+    /**
+     * Initializtion Sluggable
+     */
+    public function initSluggable()
     {
         if (!$field = $this->isFieldExists()) {
             return null;
         }
 
-        $paramSlug = array();
-        $paramColumn = array('type="'.$field['type'].'"');
+        $this->metadata->updateField($field['fieldName'], array(
+            'annotations' => array_merge(
+                $field['annotations'],
+                array('@'.$this->prefix.'\Sluggable()')
+            )
+        ));
 
+        $paramSlug = array();
         foreach ($this->parameters as $attr => $parameter) {
             if ($attr != 'column') {
                 $paramSlug[] = $attr.'="'.$parameter.'"';
@@ -222,32 +105,20 @@ class GedmoExtension extends GeneratorExtension
         foreach ($field as $attr => $value) {
             if (in_array($attr, array('length', 'unique'))) {
                 $paramSlug[] = $attr.'="'.$value.'"';
-                $paramColumn[] = $attr.'="'.$value.'"';
             }
         }
 
-        return $this->generateField(
-            'slug',
+        $length = isset($field['length'])?$field['length']:'';
+        $unique = isset($field['unique'])?' UNIQUE':'';
+
+        $this->metadata->addField(
             array(
-                '@var $slug',
-                '',
-                '@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')',
-                '@'.$this->prefixO.'\Column('.implode(', ', $paramColumn).')'
-            )
-        );
-    }
-
-    public function generateSluggableMethods()
-    {
-        if (!$field = $this->isFieldExists()) {
-            return null;
-        }
-
-        return $this->generateMethod(
-            'getSlug',
-            array('get $slug', '', '@return $'.$field['type'].' $slug'),
-            array(),
-            array('return $this->slug;')
+                'name' => 'slug',
+                'type' => 'string('.$length.')'.$unique.' NOTNULL',
+                'default' => null
+            ),
+            array('get'),
+            array('@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')')
         );
     }
 }

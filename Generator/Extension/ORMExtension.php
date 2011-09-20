@@ -17,19 +17,165 @@ namespace Genemu\Bundle\DiaBundle\Generator\Extension;
 class ORMExtension extends GeneratorExtension
 {
     /**
-     * Initialization metadata to extension MappedSuperclass
+     * Generate class annotations
+     *
+     * @return array $annotations
+     */
+    public function generateAnnotations()
+    {
+        $code = array(
+            $this->metadata->getTargetEntity(),
+            ''
+        );
+
+        if (!$this->metadata->isMappedSuperclass()) {
+            $code[] = '@'.$this->prefix.'\Table(';
+            $code[] = '<spaces>name="'.$this->metadata->getTableName().'",';
+
+            foreach ($this->metadata->getTableAnnotations() as $annotation) {
+                $code[] = '<spaces>'.$annotation.',';
+            }
+
+            $code[count($code)-1] = substr(end($code), 0, -1);
+
+            $code[] = ')';
+            $code[] = '@'.$this->prefix.'\Entity(';
+            $code[] = '<spaces>repositoryClass="'.$this->metadata->getRepositoryClass().'"';
+            $code[] = ')';
+        }
+
+        $code = array_merge($code, $this->metadata->getAnnotations());
+
+        return $this->generateAnnotation($code);
+    }
+
+    /**
+     * Generate class fields
+     *
+     * @return array $fields
+     */
+    public function generateFields()
+    {
+        $code = array();
+
+        foreach ($this->metadata->getFields() as $field) {
+            $params = array();
+            foreach ($field as $attr => $value) {
+                if (!in_array($attr, array('id', 'fieldName', 'default', 'methods', 'annotations'))) {
+                    $params[] = (($attr == 'columnName')?'name':$attr).'="'.$value.'"';
+                }
+            }
+
+            $annotations = array(
+                '@var '.$field['type'].' $'.$field['fieldName'],
+                '',
+                '@'.$this->prefix.'\Column('.implode(', ', $params).')'
+            );
+
+            if (isset($field['id']) && $field['id']) {
+                $annotations[] = '@'.$this->prefix.'\Id';
+                $annotations[] = '@'.$this->prefix.'\GeneratedValue(strategy="AUTO")';
+            }
+
+            $annotations = array_merge($annotations, $field['annotations']);
+
+            $code[] = $this->generateField($field['fieldName'], $annotations);
+        }
+
+        foreach ($this->metadata->getAssociations() as $association) {
+            $attributes = array();
+            foreach ($association as $attr => $value) {
+                if (in_array($attr, array('targetEntity', 'mappedBy', 'inversedBy', 'orphanRemoval', 'fetch'))) {
+                    $attributes[] = '<spaces>'.$attr.'="'.$value.'",';
+                } elseif ($attr == 'cascade') {
+                    $cascades = array();
+                    foreach ($value as $cascade) {
+                        $cascades[] = '"'.$cascade.'"';
+                    }
+
+                    $attributes[] = '<spaces>'.$attr.'={'.implode(', ', $cascades).'},';
+                }
+            }
+
+            $annotations = array_merge(array(
+                '@var '.$association['targetEntity'].' $'.$association['fieldName'],
+                '',
+                '@'.$this->prefix.'\\'.$association['type'].'('
+            ), $attributes);
+
+            $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
+            $annotations[] = ')';
+            $annotations = array_merge($annotations, $association['annotations']);
+
+            $code[] = $this->generateField($association['fieldName'], $annotations);
+        }
+
+        return $code;
+    }
+
+    /**
+     * Generate class methods
+     *
+     * @return array $methods
+     */
+    public function generateMethods()
+    {
+        $construct = array();
+        foreach ($this->metadata->getFields() as $field) {
+            if (isset($field['default']) && $field['default']) {
+                $construct[] = '$this->'.$field['fieldName'].' = '.$field['default'].';';
+            }
+        }
+
+        foreach ($this->metadata->getAssociations() as $field) {
+            if (in_array($field['type'], array('ManyToMany', 'OneToMany'))) {
+                $construct[] = '$this->'.$field['fieldName'].' = new ArrayCollection();';
+            }
+        }
+
+        $code = array(
+            $this->generateMethod('__construct', array('Construct'), array(), $construct)
+        );
+
+        foreach ($this->metadata->getFields() as $field) {
+            $name = $field['fieldName'];
+            $typeInt = (isset($field['type_int']))?$field['type_int']:$field['type'];
+            $type = ($field['type'] != $typeInt)?$typeInt:'';
+
+            $code = array_merge($code, $this->generateMethodFields(
+                $field['methods'],
+                array('name' => $name, 'type' => $type, 'type_int' => $typeInt, 'target' => $typeInt)
+            ));
+        }
+
+        foreach ($this->metadata->getAssociations() as $field) {
+            $name = $field['fieldName'];
+            $target = $field['targetEntity'];
+            $typeInt = (isset($field['type_int']))?$field['type_int']:$target;
+            $type = substr($target, strrpos($target, '\\')+1);
+
+            $code = array_merge($code, $this->generateMethodFields(
+                $field['methods'],
+                array('name' => $name, 'type' => $type, 'type_int' => $typeInt, 'target' => $target)
+            ));
+        }
+
+        return $code;
+    }
+
+    /**
+     * Initilization MappedSuperclass
      */
     public function initMappedSuperclass()
     {
         $this->metadata->setMappedSuperclass(true);
+        $this->metadata->addAnnotation('@'.$this->prefix.'\MappedSuperclass()');
     }
 
     /**
-     * Generate annotation Index to Entity
-     *
-     * @return string
+     * Initialization Index
      */
-    public function generateIndexClassTable()
+    public function initIndex()
     {
         if (!isset($this->parameters['name']) || !isset($this->parameters['columns'])) {
             return null;
@@ -45,39 +191,25 @@ class ORMExtension extends GeneratorExtension
             'columns={'.implode(', ', $columns).'}'
         );
 
-        return 'indexes={@'.$this->prefix.'\Index('.implode(', ', $params).')}';
+        $this->metadata->addTableAnnotation('indexes={@'.$this->prefix.'\Index('.implode(', ', $params).')}');
     }
 
     /**
-     * Generate annotation MappedSuperclass to Entity
-     *
-     * @return string
+     * Initialization InheritanceType
      */
-    public function generateMappedSuperclassClassAnnotations()
-    {
-        return '@'.$this->prefix.'\MappedSuperclass()';
-    }
-
-    /**
-     * Generate annotation InheritanceType to Entity
-     *
-     * @return string
-     */
-    public function generateInheritanceTypeClassAnnotations()
+    public function initInheritanceType()
     {
         if (!isset($this->parameters['type'])) {
             return null;
         }
 
-        return '@'.$this->prefix.'\InheritanceType("'.$this->parameters['type'].'")';
+        $this->metadata->addAnnotation('@'.$this->prefix.'\InheritanceType("'.$this->parameters['type'].'")');
     }
 
     /**
-     * Generate annotation DiscriminatorColumn and DiscriminatorMap to Entity
-     *
-     * @return string
+     * Initialization DiscrminatorColumn
      */
-    public function generateDiscriminatorColumnClassAnnotations()
+    public function initDiscriminatorColumn()
     {
         $param = array_replace(array(
             'name' => 'disrc',
@@ -107,57 +239,51 @@ class ORMExtension extends GeneratorExtension
 
         $code[] = '})';
 
-        return $code;
+        $this->metadata->addAnnotations($code);
     }
 
     /**
-     * Generate annotation ChangeTrackingPolicy to Entity
-     *
-     * @return string
+     * Initialization ChangeTrackingPolicy
      */
-    public function generateChangeTrackingPolicyClassAnnotations()
+    public function initChangeTrackingPolicy()
     {
         if (!isset($this->parameters['type'])) {
             return null;
         }
 
-        return '@'.$this->prefix.'\ChangeTrackingPolicy("'.$this->parameters['type'].'")';
+        $this->metadata->addAnnotation('@'.$this->prefix.'\ChangeTrackingPolicy("'.$this->parameters['type'].'")');
     }
 
     /**
-     * Generate annotation HasLifecycleCallbacks to Entity
-     *
-     * @return string
+     * Initialization LifecycleCallbacks
      */
-    public function generateHasLifecycleCallbacksClassAnnotations()
+    public function initHasLifecycleCallbacks()
     {
-        return '@'.$this->prefix.'\HasLifecycleCallbacks()';
+        $this->addAnnotation('@'.$this->prefix.'\HasLifecycleCallbacks()');
     }
 
     /**
-     * Generate annotations association OneToMany to Entity
-     *
-     * @return string
+     * Initialization OneToMany
      */
-    public function generateOneToManyAssociationFields()
+    public function initOneToMany()
     {
-        if (!$this->isAssociationExists()) {
+        if (!$field = $this->isAssociationExists()) {
             return null;
         }
 
-        $code = array();
         foreach ($this->parameters as $attr => $value) {
             if ($attr == 'cascade') {
-                $cascades = array();
-                foreach (explode(',', $value) as $value) {
-                    $cascades[] = '"'.$value.'"';
-                }
-                $code[] = '<spaces>'.$attr.'={'.implode(', ', $cascades).'},';
+                $field[$attr] = explode(',', $value);
             } elseif (in_array($attr, array('orphanRemoval', 'fetch'))) {
-                $code[] = '<spaces>'.$attr.'="'.$value.'",';
+                $field[$attr] = $value;
             }
         }
 
-        return $code;
+        $this->metadata->addAssociation(
+            $this->parameters['sourceEntity'],
+            $field,
+            $field['methods'],
+            $field['annotations']
+        );
     }
 }
