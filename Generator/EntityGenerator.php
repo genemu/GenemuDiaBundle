@@ -40,9 +40,6 @@ class EntityGenerator extends Generator
      */
     protected function generateEntityClass(ClassMetadataInfo $metadata)
     {
-        $abstract = $metadata->isAbstract()?'abstract ':'';
-        $parent = $metadata->getParent()?' extends '.$metadata->getParent()->getName():'';
-
         $code[] = '<?php';
         $code[] = '';
         $code[] = '/*';
@@ -54,15 +51,10 @@ class EntityGenerator extends Generator
         $code[] = ' * file that was distributed with this source code.';
         $code[] = ' */';
         $code[] = '';
-        $code[] = 'namespace '.$metadata->getNamespace().';';
+        $code[] = $metadata->getCodeNamespace();
         $code[] = '';
 
-        foreach ($metadata->getUses() as $prefix => $mapping) {
-            $name = substr($mapping, strrpos($mapping, '\\')+1);
-
-            $code[] = 'use '.$mapping.(($name != $prefix)?' as '.$prefix:'').';';
-        }
-
+        $code = array_merge($code, $metadata->getCodeUses());
         $code[] = '';
 
         foreach ($metadata->getExtension('Annotations') as $generator) {
@@ -71,7 +63,7 @@ class EntityGenerator extends Generator
             }
         }
 
-        $code[] = $abstract.'class '.$metadata->getName().$parent;
+        $code[] = $metadata->getCodeClass();
         $code[] = '{';
 
         foreach ($metadata->getExtension('Fields') as $generator) {

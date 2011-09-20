@@ -19,6 +19,7 @@ use Genemu\Bundle\DiaBundle\Generator\Extension\GeneratorExtension;
 class ClassMetadataInfo
 {
     protected $isAbstract;
+    protected $isMappedSuperclass;
     protected $name;
     protected $path;
     protected $parent;
@@ -28,155 +29,88 @@ class ClassMetadataInfo
     protected $uses;
     protected $table;
     protected $annotations;
-    protected $isMappedSuperclass;
     protected $fields;
     protected $associations;
 
     /**
      * Construct
-     * Add default use Doctrine\ORM\Mapping as ORM
      *
      * @param string  $name
      * @param string  $path
      * $param boolean $abstract
      */
-    public function __construct($name, $path, $abstract = false)
+    public function __construct($name, $namespace, $path, $abstract = false)
     {
         $this->isAbstract = $abstract;
         $this->name = $name;
+        $this->namespace = $namespace;
         $this->path = $path;
-
-        $this->table = array(
-            'name' => null,
-            'annotations' => array()
-        );
         $this->annotations = array();
         $this->extensions = array();
         $this->fields = array();
         $this->associations = array();
-        $this->addUse('Doctrine\ORM\Mapping', 'ORM');
     }
 
     /**
-     * Set parent class
+     * Get string name
      *
-     * @param ClassMetadataInfo $parent
+     * @return string $name
      */
-    public function setParent(ClassMetadataInfo $parent)
+    public function getName()
     {
-        $this->parent = $parent;
-
-        if ($this->namespace != $parent->getNamespace()) {
-            $this->addUse($parent->getNamespace().'\\'.$parent->getName(), $parent->getName());
-        }
+        return $this->name;
     }
 
     /**
-     * Add children class
+     * Get string namespace
      *
-     * @param ClassMetadataInfo $children
+     * @return string $namespace
      */
-    public function addChildren(ClassMetadataInfo $children)
+    public function getNamespace()
     {
-        $this->children[$children->getName()] = $children;
+        return $this->namespace;
     }
 
     /**
-     * Set namepsace
+     * Get string target entity
      *
-     * @param string $namespace
+     * @return string $namespace\$name
      */
-    public function setNamespace($namespace)
+    public function getTargetEntity()
     {
-        $this->namespace = $namespace;
+        return $this->namespace.'\\'.$this->name;
     }
 
     /**
-     * Set table name
+     * Get target repository
      *
-     * @param string $tableName
+     * @return string $namespace\repository\$name
      */
-    public function setTableName($tableName)
+    public function getTargetRepository()
     {
-        $this->table['name'] = $tableName;
-    }
-
-    public function addTableAnnotation($annotation)
-    {
-        $this->table['annotations'][] = $annotation;
-    }
-
-    public function addAnnotation($annotation)
-    {
-        $this->annotations[] = $annotation;
-    }
-
-    public function addAnnotations(array $annotations)
-    {
-        $this->annotations = array_merge($this->annotations, $annotations);
-    }
-
-    public function getAnnotations()
-    {
-        return $this->annotations;
+        return $this->namespace.'\\Repository\\'.$this->name;
     }
 
     /**
-     * Set mappedSuperclass
+     * Get path
      *
-     * @param boolean $boolean
+     * @return string $path
      */
-    public function setMappedSuperclass($boolean)
+    public function getPath()
     {
-        $this->isMappedSuperclass = $boolean;
+        return $this->path;
     }
 
     /**
-     * Add extension
+     * Get table
      *
-     * @param string             $type
-     * @param GeneratorExtension $generator
-     */
-    public function addExtension($type, GeneratorExtension $generator)
-    {
-        if (!isset($this->extensions[$type])) {
-            $this->extensions[$type] = array();
-        }
-
-        $this->extensions[$type] = array_merge($this->extensions[$type], array($generator));
-    }
-
-    /**
-     * Add use
+     * @param string $name
      *
-     * @param string $mapping
-     * @param string $prefix
+     * @return string\array\null $table
      */
-    public function addUse($mapping, $prefix)
+    public function getTable($name)
     {
-        if (!isset($this->uses[$prefix])) {
-            $this->uses[$prefix] = $mapping;
-        }
-    }
-
-    /**
-     * Is abstract
-     *
-     * @return boolean $isAbstract
-     */
-    public function isAbstract()
-    {
-        return $this->isAbstract;
-    }
-
-    /**
-     * Is mappedSuperclass
-     *
-     * @return boolean $isMappedSuperclass
-     */
-    public function isMappedSuperclass()
-    {
-        return $this->isMappedSuperclass;
+        return isset($this->table[$name])?$this->table[$name]:null;
     }
 
     /**
@@ -200,33 +134,73 @@ class ClassMetadataInfo
     }
 
     /**
-     * Get name
-     *
-     * @return string $name
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Get namespace
+     * Get code namespace
      *
      * @return string $namespace
      */
-    public function getNamespace()
+    public function getCodeNamespace()
     {
-        return $this->namespace;
+        return 'namespace '.$this->namespace.';';
     }
 
-    public function getTargetEntity()
+    /**
+     * Get code uses
+     *
+     * @return array $uses
+     */
+    public function getCodeUses()
     {
-        return $this->namespace.'\\'.$this->name;
+        $uses = array();
+        foreach ($this->uses as $namespace => $as) {
+            $uses[] = 'use '.$namespace.($as?' as '.$as:'').';';
+        }
+
+        return $uses;
     }
 
-    public function getRepositoryClass()
+    /**
+     * Get code class
+     *
+     * @return string $class
+     */
+    public function getCodeClass()
     {
-        return $this->namespace.'\\Repository\\'.$this->name;
+        $abstract = $this->isAbstract?'abstract ':'';
+        $parent = $this->parent?' extends '.$this->parent->getName():'';
+
+        return $abstract.'class '.$this->name.$parent;
+    }
+
+    /**
+     * Get code repository
+     *
+     * @param string $spaces
+     *
+     * @return string $repository
+     */
+    public function getCodeRepository($spaces = '')
+    {
+        return $spaces.'repositoryClass="'.$this->getTargetRepository().'"';
+    }
+
+    /**
+     * Get code table
+     *
+     * @param string $spaces
+     *
+     * @return string $table
+     */
+    public function getCodeTable($spaces = '')
+    {
+        $table = array($spaces.'name="'.$this->table['name'].'",');
+
+        foreach ($this->table['annotations'] as $annotation) {
+            $table[] = $spaces.$annotation.',';
+        }
+
+        $table[count($table)-1] = substr(end($table), 0, -1);
+
+        return $table;
     }
 
     /**
@@ -239,48 +213,26 @@ class ClassMetadataInfo
         return $this->extensions;
     }
 
+    /**
+     * Get extension
+     *
+     * @param string $name
+     *
+     * @return array $extension
+     */
     public function getExtension($name)
     {
-        if (isset($this->extensions[$name])) {
-            return $this->extensions[$name];
-        }
-
-        return null;
+        return isset($this->extensions[$name])?$this->extensions[$name]:null;
     }
 
     /**
-     * Get uses
+     * Get fields
      *
-     * @return array $uses
+     * @return array $fields
      */
-    public function getUses()
+    public function getFields()
     {
-        return $this->uses;
-    }
-
-    /**
-     * Get table name
-     *
-     * @return string $tableName
-     */
-    public function getTableName()
-    {
-        return $this->table['name'];
-    }
-
-    public function getTableAnnotations()
-    {
-        return $this->table['annotations'];
-    }
-
-    /**
-     * Get path
-     *
-     * @return string $path
-     */
-    public function getPath()
-    {
-        return $this->path;
+        return $this->fields;
     }
 
     /**
@@ -294,88 +246,267 @@ class ClassMetadataInfo
     }
 
     /**
-     * Get fields
+     * Is abstract
      *
-     * @return array $fields
+     * @return boolean $isAbstract
      */
-    public function addField(array $attributes, array $methods = array('set', 'get'), array $annotations = array())
+    public function isAbstract()
     {
-        $types = explode(' ', $attributes['type']);
+        return $this->isAbstract;
+    }
 
-        $name = $attributes['name'];
-        $default = $attributes['default'];
-        $column = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $name));
+    /**
+     * Is mapped super class
+     *
+     * @return boolean $isMappedSuperclass
+     */
+    public function isMappedSuperclass()
+    {
+        return $this->isMappedSuperclass;
+    }
 
-        $field = array(
-            'fieldName' => $name,
-            'methods' => $methods,
-            'annotations' => $annotations
-        );
+    /**
+     * Set mappedSuperclass
+     *
+     * @param boolean $boolean
+     */
+    public function setMappedSuperclass($boolean)
+    {
+        $this->isMappedSuperclass = $boolean;
+    }
 
-        foreach ($types as $type) {
-            preg_match_all('/(.*)\((.*)\)/', $type, $matches);
-            $attr = array(
-                isset($matches[1][0])?$matches[1][0]:$type,
-                isset($matches[2][0])?$matches[2][0]:null
-            );
+    /**
+     * Set table
+     *
+     * @param array $table
+     */
+    public function setTable(array $table)
+    {
+        $this->table = $table;
+    }
 
-            if ($attr[0] == 'scale') {
-                $field['scale'] = $attr[1];
-            } elseif ($attr[0] == 'precision') {
-                $field['precision'] = $attr[1];
-            } elseif (in_array($attr[0], array(
-                'string',
-                'integer',
-                'smallint',
-                'bigint',
-                'boolean',
-                'decimal',
-                'date',
-                'time',
-                'datetime',
-                'text',
-                'object',
-                'array',
-                'float'
-            ))) {
-                $field['type'] = $attr[0];
+    /**
+     * Set table name
+     *
+     * @param string $name
+     */
+    public function setTableName($name)
+    {
+        $this->table['name'] = $name;
+    }
 
-                if ($attr[0] == 'datetime') {
-                    $field['type_int'] = '\\DateTime';
+    /**
+     * Add table annotation
+     *
+     * @param string $annotation
+     */
+    public function addTableAnnotation($annotation)
+    {
+        $this->table['annotations'][] = $annotation;
+    }
+
+    /**
+     * Add annotation class
+     *
+     * @param string $annotation
+     */
+    public function addAnnotation($annotation)
+    {
+        $this->annotations[] = $annotation;
+    }
+
+    /**
+     * Add annotations class
+     *
+     * @param array $annotations
+     */
+    public function addAnnotations(array $annotations)
+    {
+        $this->annotations = array_merge($this->annotations, $annotations);
+    }
+
+    /**
+     * Set extensions
+     *
+     * @param array              $extensions
+     * @param GeneratorExtension $generator
+     */
+    public function setExtensions(array $extensions, $generator)
+    {
+        foreach ($extensions as $name) {
+            $this->extensions[$name] = array($generator);
+        }
+    }
+
+    /**
+     * Add extension
+     *
+     * @param string             $name
+     * @param GeneratorExtension $generator
+     */
+    public function addExtension($name, $generator)
+    {
+        if (!isset($this->extensions[$name])) {
+            $this->extensions[$name] = array();
+        }
+
+        $this->extensions[$name] = array_merge($this->extensions[$name], array($generator));
+    }
+
+    /**
+     * Set parent
+     *
+     * @param ClassMetadataInfo $parent
+     */
+    public function setParent(ClassMetadataInfo $parent)
+    {
+        if ($this->namespace != $parent->getNamespace()) {
+            $this->addUse($parent->getTargetEntity());
+        }
+
+        $this->parent = $parent;
+    }
+
+    /**
+     * Add children
+     *
+     * @param ClassMetadataInfo $children
+     */
+    public function addChildren(ClassMetadataInfo $children)
+    {
+        $this->children[$children->getTargetEntity()] = $children;
+    }
+
+    /**
+     * Add use
+     *
+     * @param string $namespace
+     * @param string $as
+     */
+    public function addUse($namespace, $as = null)
+    {
+        $namespace = ($namespace == 'Collection')?'Doctrine\Common\Collections\ArrayCollection':$namespace;
+
+        $this->uses[$namespace] = $as;
+    }
+
+    /**
+     * Get annotations class
+     *
+     * @return array $annotations
+     */
+    public function getAnnotations()
+    {
+        return $this->annotations;
+    }
+
+    /**
+     * Add field
+     *
+     * @param array $attributes
+     */
+    public function addField(array $attributes)
+    {
+        $field = array();
+
+        foreach ($attributes as $attr => $value) {
+            if ($value) {
+                switch ($attr) {
+                    case 'name':
+                        $field['fieldName'] = $value;
+
+                        $column = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $value));
+                        if ($column != $value) {
+                            $field['columnName'] = $column;
+                        }
+                        break;
+                    case 'type':
+                        foreach (explode(' ', $value) as $type) {
+                            preg_match_all('/(.*)\((.*)\)/', $type, $matches);
+                            $type = strtolower(isset($matches[1][0])?$matches[1][0]:$type);
+                            $length = isset($matches[2][0])?$matches[2][0]:null;
+
+                            switch ($type) {
+                                case 'primarykey':
+                                    $field['id'] = true;
+                                    $field['type'] = 'integer';
+                                    $field['methods'] = array('get');
+                                    break;
+                                case 'precision':
+                                case 'scale':
+                                    $field[$type] = $length;
+                                    break;
+                                case 'notnull':
+                                    unset($field['nullable']);
+                                    break;
+                                case 'unique':
+                                    $field['unique'] = 'true';
+                                    break;
+                                case 'string':
+                                case 'integer':
+                                case 'smallint':
+                                case 'bigint':
+                                case 'boolean':
+                                case 'decimal':
+                                case 'date':
+                                case 'time':
+                                case 'datetime':
+                                case 'text':
+                                case 'object':
+                                case 'array':
+                                case 'float':
+                                    $field['type'] = $type;
+
+                                    if ($type == 'datetime') {
+                                        $field['type_int'] = '\\DateTime';
+                                    }
+
+                                    if ($length) {
+                                        $field['length'] = $length;
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+                    case 'default':
+                    case 'methods':
+                    case 'annotations':
+                        $field[$attr] = $value;
+                        break;
                 }
-
-                if ($attr[1]) {
-                    $field['length'] = $attr[1];
-                }
-            } elseif ($attr[0] == 'primaryKey') {
-                $field['type'] = 'integer';
-                $field['id'] = true;
-                $field['methods'] = array('get');
             }
         }
 
-        if ($name != $column) {
-            $field['columnName'] = $column;
+        if (!isset($field['annotations'])) {
+            $field['annotations'] = array();
         }
 
-        if ($default) {
-            $field['default'] = $default;
-        }
-
-        if (!in_array('NOTNULL', $types) && $type != 'primaryKey') {
-            $field['nullable'] = 'true';
-        }
-
-        if (in_array('UNIQUE', $types) && $type != 'primaryKey') {
-            $field['unique'] = 'true';
-        }
-
-        $this->fields[$name] = $field;
+        $this->fields[$field['fieldName']] = $field;
     }
 
-    public function updateField($name, array $parameters)
+    /**
+     * Update field
+     *
+     * @param string $name
+     * @param array  $attributes
+     */
+    public function updateField($name, array $attributes)
     {
-        $this->fields[$name] = array_merge($this->fields[$name], $parameters);
+        if (!isset($this->fields[$name])) {
+            return;
+        }
+
+        foreach ($attributes as $type => $values) {
+            if (isset($this->fields[$name][$type])) {
+                $old = $this->fields[$name][$type];
+
+                if (is_array($old) && is_array($values)) {
+                    $this->fields[$name][$type] = array_merge($old, $values);
+                } else {
+                    $this->fields[$name][$type] = $values;
+                }
+            }
+        }
     }
 
     /**
@@ -384,94 +515,85 @@ class ClassMetadataInfo
      * @param string $name
      * @param array  $attributes
      */
-    public function addAssociation($name, array $attributes, array $methods, array $annotations = array())
+    public function addAssociation($name, array $attributes)
     {
-        $this->associations[$name] = array_merge(array_merge(
-            $attributes,
-            array('methods' => $methods)
-        ), array('annotations' => $annotations));
+        $this->associations[$name] = $attributes;
     }
 
     /**
-     * Add OneToMany association
+     * Add One To Many
      *
      * @param ClassMetadataInfo $class
      * @param string            $name
      */
     public function addOneToMany(ClassMetadataInfo $class, $name = null)
     {
-        $this->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
+        $this->addUse('Collection');
+
+        if ($this->namespace != $class->getNamespace()) {
+            $this->addUse($class->getTargetEntity());
+            $class->addUse($this->gettargetEntity());
+        }
 
         $nameFrom = strtolower($name?$name:$this->name);
         $nameTo = strtolower($name?$name:$class->getName()).'s';
-        $targetFrom = $this->namespace.'\\'.$this->name;
-        $targetTo = $class->getNamespace().'\\'.$class->getName();
 
-        if ($this->namespace != $class->getNamespace()) {
-            $this->addUse($targetTo, $class->getName());
-            $class->addUse($targetFrom, $this->name);
-        }
-
-        $this->addAssociation($class->getName(), array(
+        $this->associations[$nameTo] = array(
             'type' => 'OneToMany',
             'type_int' => 'Doctrine\Common\Collections\ArrayCollection',
             'fieldName' => $nameTo,
-            'targetEntity' => $targetTo,
-            'mappedBy' => $nameFrom
-        ), array('add', 'get'));
+            'targetEntity' => $this->getTargetEntity(),
+            'mappedBy' => $nameFrom,
+            'methods' => array('add', 'get'),
+            'annotations' => array()
+        );
 
-        $class->addAssociation($this->name, array(
+        $class->addAssociation($nameFrom, array(
             'type' => 'ManyToOne',
             'fieldName' => $nameFrom,
-            'targetEntity' => $targetFrom,
-            'inversedBy' => $nameTo
-        ), array('set', 'get'));
+            'targetEntity' => $class->getTargetEntity(),
+            'inversedBy' => $nameTo,
+            'methods' => array('set', 'get'),
+            'annotations' => array()
+        ));
     }
 
     /**
-     * Add ManyToMany association
+     * Add Many To Many
      *
-     * @param ClassMetdataInfo $class
+     * @param ClassMetadataInfo $class
      */
     public function addManyToMany(ClassMetadataInfo $class)
     {
-        $this->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
-        $class->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
+        $this->addUse('Collection');
+        $class->addUse('Collection');
 
         if ($this->namespace != $class->getNamespace()) {
-            $this->addUse($class->getNamespace().'\\'.$class->getName());
-            $class->addUse($this->namespace.'\\'.$this->name);
+            $this->addUse($class->getTargetEntity());
+            $class->addUse($this->gettargetEntity());
         }
 
         $nameTo = strtolower($class->getName()).'s';
         $nameFrom = strtolower($this->name).'s';
-        $targetTo = $class->getNamespace().'\\'.$class->getName();
-        $targetFrom = $this->namespace.'\\'.$this->name;
 
-        $this->addAssociation($nameTo, array(
+        $this->associations[$nameTo] = array(
             'type' => 'ManyToMany',
             'fieldName' => $nameTo,
-            'targetEntity' => $targetTo,
+            'targetEntity' => $class->getTargetEntity(),
             'mappedBy' => $nameFrom,
-            'sourceEntity' => $class->getName()
-        ));
+            'sourceEntity' => $class->getName(),
+            'methods' => array('add', 'get'),
+            'annotations' => array()
+        );
 
         $class->addAssociation($nameFrom, array(
             'type' => 'ManyToMany',
             'fieldName' => $nameFrom,
-            'targetEntity' => $targetFrom,
+            'targetEntity' => $this->getTargetEntity(),
             'inversedBy' => $nameTo,
-            'sourceEntity' => $this->name
+            'sourceEntity' => $this->name,
+            'methods' => array('add', 'get'),
+            'annotations' => array()
         ));
-    }
-
-    /**
-     * Get fields
-     *
-     * @return array $fields
-     */
-    public function getFields()
-    {
-        return $this->fields;
     }
 }

@@ -79,18 +79,24 @@ class DiaEngine
             $abstract = $element->isAbstract();
             $bundle = $this->kernel->getBundle($this->xml->getNamePackage($element));
             $path = $bundle->getPath().'/Entity';
+            $namespace = $this->registry->getEntityNamespace($bundle->getName());
 
             $prefix = str_replace('Bundle', '', $bundle->getName());
             $prefix = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $prefix));
 
-            $class = new ClassMetadataInfo($name, $path, $abstract);
-            $class->setNamespace($this->registry->getEntityNamespace($bundle->getName()));
-            $class->setTableName($prefix.'_'.strtolower($name));
+            $class = new ClassMetadataInfo($name, $namespace, $path, $abstract);
+            $class->setTable(array(
+                'name' => $prefix.'_'.strtolower($name),
+                'annotations' => array()
+            ));
 
             $generator = new $this->extensions['ORM']['generator']($class, 'ORM');
-            $class->addExtension('Annotations', $generator);
-            $class->addExtension('Fields', $generator);
-            $class->addExtension('Methods', $generator);
+            $class->setExtensions(array(
+                'Annotations',
+                'Fields',
+                'Methods'
+            ), $generator);
+            $class->addUse($this->extensions['ORM']['namespace'], 'ORM');
 
             /**
              * Search attributes to class
@@ -99,7 +105,9 @@ class DiaEngine
                 $class->addField(array(
                     'name' => $attribute->getName(),
                     'type' => $attribute->getType(),
-                    'default' => $attribute->getValue()
+                    'default' => $attribute->getValue(),
+                    'methods' => array('set', 'get'),
+                    'annotations' => array()
                 ));
             }
 
@@ -133,12 +141,12 @@ class DiaEngine
             }
         }
 
+        /**
+         * Search extensions to class
+         */
         foreach ($this->xml->getClasses() as $element) {
             $class = $this->classes[$element->getId()];
 
-            /**
-             * Search extensions to class
-             */
             foreach ($element->getOperations() as $operation) {
                 $name = $operation->getName();
 

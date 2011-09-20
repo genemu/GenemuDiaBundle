@@ -42,7 +42,7 @@ class GenemuDiaExtension extends Extension
                     'Blank',
                     'NotNull',
                     'Null',
-                    'Tree',
+                    'True',
                     'False',
                     'Type',
                     'Email',

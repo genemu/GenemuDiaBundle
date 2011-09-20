@@ -27,12 +27,16 @@ class GedmoExtension extends GeneratorExtension
         $target = $this->metadata->getTargetEntity();
 
         $this->metadata->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
+        $this->metadata->addAnnotation('@'.$this->prefix.'\Tree("nested")');
 
         foreach (array('Root' => 'root', 'Left' => 'lft', 'Right' => 'rgt', 'Level' => 'lvl') as $name => $field) {
             $this->metadata->addField(
-                array('name' => $field, 'type' => 'integer NOTNULL', 'default' => null),
-                array('get'),
-                array('@'.$this->prefix.'\Tree'.$name.'()')
+                array(
+                    'name' => $field,
+                    'type' => 'integer NOTNULL',
+                    'methods' => array('get'),
+                    'annotations' => array('@'.$this->prefix.'\Tree'.$name.'()')
+                )
             );
         }
 
@@ -42,10 +46,10 @@ class GedmoExtension extends GeneratorExtension
                 'fieldName' => 'parent',
                 'targetEntity' => $target,
                 'sourceEntity' => $this->metadata->getName(),
-                'inversedBy' => 'children'
-            ),
-            array('set', 'get'),
-            array('@'.$this->prefix.'\TreeParent()')
+                'inversedBy' => 'children',
+                'methods' => array('set', 'get'),
+                'annotations' => array('@'.$this->prefix.'\TreeParent()')
+            )
         );
 
         $this->metadata->addAssociation('children',
@@ -55,9 +59,10 @@ class GedmoExtension extends GeneratorExtension
                 'fieldName' => 'children',
                 'targetEntity' => $target,
                 'sourceEntity' => $this->metadata->getName(),
-                'mappedBy' => 'parent'
-            ),
-            array('add', 'get')
+                'mappedBy' => 'parent',
+                'methods' => array('add', 'get'),
+                'annotations' => array()
+            )
         );
     }
 
@@ -67,15 +72,21 @@ class GedmoExtension extends GeneratorExtension
     public function initTimestampable()
     {
         $this->metadata->addField(
-            array('name' => 'createdAt', 'type' => 'datetime NOTNULL', 'default' => null),
-            array('get'),
-            array('@'.$this->prefix.'\Timestampable(on="create")')
+            array(
+                'name' => 'createdAt',
+                'type' => 'datetime NOTNULL',
+                'methods' => array('get'),
+                'annotations' => array('@'.$this->prefix.'\Timestampable(on="create")')
+            )
         );
 
         $this->metadata->addField(
-            array('name' => 'updatedAt', 'type' => 'datetime NOTNULL', 'default' => null),
-            array('get'),
-            array('@'.$this->prefix.'\Timestampable(on="update")')
+            array(
+                'name' => 'updatedAt',
+                'type' => 'datetime NOTNULL',
+                'methods' => array('get'),
+                'annotations' => array('@'.$this->prefix.'\Timestampable(on="update")')
+            )
         );
     }
 
@@ -89,11 +100,9 @@ class GedmoExtension extends GeneratorExtension
         }
 
         $this->metadata->updateField($field['fieldName'], array(
-            'annotations' => array_merge(
-                $field['annotations'],
-                array('@'.$this->prefix.'\Sluggable()')
+                'annotations' => array('@'.$this->prefix.'\Sluggable()')
             )
-        ));
+        );
 
         $paramSlug = array();
         foreach ($this->parameters as $attr => $parameter) {
@@ -103,7 +112,7 @@ class GedmoExtension extends GeneratorExtension
         }
 
         foreach ($field as $attr => $value) {
-            if (in_array($attr, array('length', 'unique'))) {
+            if ($attr == 'unique') {
                 $paramSlug[] = $attr.'="'.$value.'"';
             }
         }
@@ -115,10 +124,9 @@ class GedmoExtension extends GeneratorExtension
             array(
                 'name' => 'slug',
                 'type' => 'string('.$length.')'.$unique.' NOTNULL',
-                'default' => null
-            ),
-            array('get'),
-            array('@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')')
+                'methods' => array('get'),
+                'annotations' => array('@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')')
+            )
         );
     }
 }

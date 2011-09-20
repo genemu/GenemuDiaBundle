@@ -30,17 +30,10 @@ class ORMExtension extends GeneratorExtension
 
         if (!$this->metadata->isMappedSuperclass()) {
             $code[] = '@'.$this->prefix.'\Table(';
-            $code[] = '<spaces>name="'.$this->metadata->getTableName().'",';
-
-            foreach ($this->metadata->getTableAnnotations() as $annotation) {
-                $code[] = '<spaces>'.$annotation.',';
-            }
-
-            $code[count($code)-1] = substr(end($code), 0, -1);
-
+            $code = array_merge($code, $this->metadata->getCodeTable('<spaces>'));
             $code[] = ')';
             $code[] = '@'.$this->prefix.'\Entity(';
-            $code[] = '<spaces>repositoryClass="'.$this->metadata->getRepositoryClass().'"';
+            $code[] = $this->metadata->getCodeRepository('<spaces>');
             $code[] = ')';
         }
 
@@ -61,7 +54,7 @@ class ORMExtension extends GeneratorExtension
         foreach ($this->metadata->getFields() as $field) {
             $params = array();
             foreach ($field as $attr => $value) {
-                if (!in_array($attr, array('id', 'fieldName', 'default', 'methods', 'annotations'))) {
+                if (!in_array($attr, array('id', 'fieldName', 'default', 'methods', 'annotations', 'type_int'))) {
                     $params[] = (($attr == 'columnName')?'name':$attr).'="'.$value.'"';
                 }
             }
@@ -133,9 +126,10 @@ class ORMExtension extends GeneratorExtension
             }
         }
 
-        $code = array(
-            $this->generateMethod('__construct', array('Construct'), array(), $construct)
-        );
+        $code = array();
+        if ($construct) {
+            $code[] = $this->generateMethod('__construct', array('Construct'), array(), $construct);
+        }
 
         foreach ($this->metadata->getFields() as $field) {
             $name = $field['fieldName'];
@@ -279,11 +273,6 @@ class ORMExtension extends GeneratorExtension
             }
         }
 
-        $this->metadata->addAssociation(
-            $this->parameters['sourceEntity'],
-            $field,
-            $field['methods'],
-            $field['annotations']
-        );
+        $this->metadata->updateAssociation($this->parameters['sourceEntity'], $field);
     }
 }
