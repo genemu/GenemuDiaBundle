@@ -373,7 +373,34 @@ class ClassMetadataInfo
      */
     public function addManyToMany(ClassMetadataInfo $class)
     {
+        $this->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
+        $class->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
 
+        if ($this->namespace != $class->getNamespace()) {
+            $this->addUse($class->getNamespace().'\\'.$class->getName());
+            $class->addUse($this->namespace.'\\'.$this->name);
+        }
+
+        $nameTo = strtolower($class->getName()).'s';
+        $nameFrom = strtolower($this->name).'s';
+        $targetTo = $class->getNamespace().'\\'.$class->getName();
+        $targetFrom = $this->namespace.'\\'.$this->name;
+
+        $this->addAssociation($nameTo, array(
+            'type' => 'ManyToMany',
+            'fieldName' => $nameTo,
+            'targetEntity' => $targetTo,
+            'mappedBy' => $nameFrom,
+            'sourceEntity' => $class->getName()
+        ));
+
+        $class->addAssociation($nameFrom, array(
+            'type' => 'ManyToMany',
+            'fieldName' => $nameFrom,
+            'targetEntity' => $targetFrom,
+            'inversedBy' => $nameTo,
+            'sourceEntity' => $this->name
+        ));
     }
 
     /**

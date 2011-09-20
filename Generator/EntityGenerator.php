@@ -55,11 +55,25 @@ class EntityGenerator extends Generator
         if ($fields = $this->generateClassFields($metadata)) {
             $code[] = $fields;
         }
+
         if ($associations = $this->generateClassAssociationFields($metadata)) {
             $code[] = $associations;
         }
+
+        if ($extension = $this->generateExtension($metadata, 'Fields')) {
+            $code = array_merge($code, $extension);
+        }
+
         if ($construct = $this->generateClassConstruct($metadata)) {
             $code[] = $construct;
+        }
+
+        if ($methods = $this->generateClassMethodFields($metadata)) {
+            $code[] = $methods;
+        }
+
+        if ($extension = $this->generateExtension($metadata, 'MethodFields')) {
+            $code[] = $extension;
         }
 
         $code[] = '}';
@@ -250,6 +264,42 @@ class EntityGenerator extends Generator
         }
 
         return ($code)?$this->generateMethod('__construct', array('Construct'), array(), $code):null;
+    }
+
+    /**
+     * Generate methods fields
+     *
+     * @param ClassMetadataInfo $metadata
+     *
+     * @return string $methods
+     */
+    protected function generateClassMethodFields(ClassMetadataInfo $metadata)
+    {
+        $code = array();
+
+        foreach ($metadata->getFields() as $field) {
+            $name = $field['fieldName'];
+            $typeInt = (isset($field['type_int']))?$field['type_int']:$field['type'];
+            $type = ($field['type'] != $typeInt)?$typeInt:'';
+
+            if (!isset($field['id']) || !$field['id']) {
+                $code[] = $this->generateMethod(
+                    'set'.ucfirst($name),
+                    array('set '.$name, '', '@param '.$typeInt.' $'.$name),
+                    array($type.'$'.$name),
+                    array('$this->'.$name.' = $'.$name.';')
+                );
+            }
+
+            $code[] = $this->generateMethod(
+                'get'.ucfirst($name),
+                array('get '.$name, '', '@return '.$typeInt.' $'.$name),
+                array(),
+                array('return $this->'.$name.';')
+            );
+        }
+
+        return implode("\n", $code);
     }
 
     /**
