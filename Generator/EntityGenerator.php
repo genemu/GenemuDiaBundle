@@ -72,8 +72,8 @@ class EntityGenerator extends Generator
             $code[] = $methods;
         }
 
-        if ($extension = $this->generateExtension($metadata, 'MethodFields')) {
-            $code[] = $extension;
+        if ($extension = $this->generateExtension($metadata, 'Methods')) {
+            $code = array_merge($code, $extension);
         }
 
         $code[] = '}';
@@ -263,6 +263,10 @@ class EntityGenerator extends Generator
             }
         }
 
+        if ($extension = $this->generateExtension($metadata, 'Construct')) {
+            $code = array_merge($code, $extension);
+        }
+
         return ($code)?$this->generateMethod('__construct', array('Construct'), array(), $code):null;
     }
 
@@ -318,6 +322,8 @@ class EntityGenerator extends Generator
         $code = array();
         foreach ($metadata->getExtensions() as $name => $generators) {
             foreach ($generators as $generator) {
+                $generator->setPrefixO($this->prefix);
+
                 if (method_exists($generator, 'generate'.$name.$type)) {
                     if ($value = $generator->{'generate'.$name.$type}($field?$field:null)) {
                         if (is_array($value)) {

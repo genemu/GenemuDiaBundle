@@ -30,7 +30,59 @@ class GenemuDiaExtension extends Extension
                     'HasLifecycleCallbacks',
                     'Index',
                     'OneToMany',
-                    'ManyToOne'
+                    'ManyToOne',
+                    'ManyToMany'
+                )
+            ),
+            'Assert' => array(
+                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\AssertExtension',
+                'namespace' => 'Symfony\Component\Validator\Constraints',
+                'types' => array(
+                    'NotBlank',
+                    'Blank',
+                    'NotNull',
+                    'Null',
+                    'Tree',
+                    'False',
+                    'Type',
+                    'Email',
+                    'MinLength',
+                    'MaxLength',
+                    'Url',
+                    'Regex',
+                    'Ip',
+                    'Max',
+                    'Min',
+                    'Date',
+                    'Time',
+                    'DateTime',
+                    'Choice',
+                    'Collection',
+                    'Language',
+                    'Locale',
+                    'Country',
+                    'File',
+                    'Callback',
+                    'Valid',
+                    'All'
+                )
+            ),
+            'DoctrineAssert' => array(
+                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\DoctrineAssertExtension',
+                'namespace' => 'Symfony\Bridge\Doctrine\Validator\Constraints',
+                'types' => array(
+                    'UniqueEntity'
+                )
+            ),
+            'Gedmo' => array(
+                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\GedmoExtension',
+                'namespace' => 'Gedmo\Mapping\Annotation',
+                'types' => array(
+                    'Timestampable',
+                    'Sluggable',
+                    'Tree',
+                    'Translatable',
+                    'Loggable'
                 )
             )
         );

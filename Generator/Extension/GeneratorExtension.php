@@ -20,6 +20,7 @@ abstract class GeneratorExtension
 {
     protected $metadata;
     protected $prefix;
+    protected $prefixO;
     protected $parameters;
 
     /**
@@ -34,5 +35,75 @@ abstract class GeneratorExtension
         $this->metadata = $metadata;
         $this->prefix = $prefix;
         $this->parameters = $parameters;
+    }
+
+    public function setPrefixO($prefixO)
+    {
+        $this->prefixO = $prefixO;
+    }
+
+    /**
+     * Generate field
+     *
+     * @param string $name
+     * @param array  $annotations
+     *
+     * @return string $field
+     */
+    protected function generateField($name, array $annotations)
+    {
+        return implode("\n", array(
+            $this->generateAnnotation($annotations, '<spaces>'),
+            '<spaces>protected $'.$name.';',
+            ''
+        ));
+    }
+
+    /**
+     * Generate annotation
+     *
+     * @param array  $annotations
+     * @param string $spaces
+     * @param string $first
+     *
+     * @return string $annotation
+     */
+    protected function generateAnnotation(array $annotations, $spaces = '', $first = '/**')
+    {
+        $code[] = $spaces.$first;
+        foreach ($annotations as $annotation) {
+            $code[] = $spaces.' * '.$annotation;
+        }
+        $code[] = $spaces.' */';
+
+        return implode("\n", $code);
+    }
+
+    /**
+     * Generate method
+     *
+     * @param string $name
+     * @param array  $annotations
+     * @param array  $parameters
+     * @param array  $contents
+     *
+     * @return string $method
+     */
+    protected function generateMethod($name, array $annotations, array $parameters, array $contents)
+    {
+        $code = array(
+            $this->generateAnnotation($annotations, '<spaces>'),
+            '<spaces>public function '.$name.'('.implode(', ', $parameters).')',
+            '<spaces>{'
+        );
+
+        foreach ($contents as $content) {
+            $code[] = $content?'<spaces><spaces>'.$content:'';
+        }
+
+        $code[] = '<spaces>}';
+        $code[] = '';
+
+        return implode("\n", $code);
     }
 }
