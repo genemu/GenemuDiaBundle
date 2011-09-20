@@ -194,4 +194,60 @@ class GedmoExtension extends GeneratorExtension
             )
         );
     }
+
+    public function generateSluggableAnnotationField()
+    {
+        if (!$this->isFieldExists()) {
+            return null;
+        }
+
+        return '@'.$this->prefix.'\Sluggable()';
+    }
+
+    public function generateSluggableFields()
+    {
+        if (!$field = $this->isFieldExists()) {
+            return null;
+        }
+
+        $paramSlug = array();
+        $paramColumn = array('type="'.$field['type'].'"');
+
+        foreach ($this->parameters as $attr => $parameter) {
+            if ($attr != 'column') {
+                $paramSlug[] = $attr.'="'.$parameter.'"';
+            }
+        }
+
+        foreach ($field as $attr => $value) {
+            if (in_array($attr, array('length', 'unique'))) {
+                $paramSlug[] = $attr.'="'.$value.'"';
+                $paramColumn[] = $attr.'="'.$value.'"';
+            }
+        }
+
+        return $this->generateField(
+            'slug',
+            array(
+                '@var $slug',
+                '',
+                '@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')',
+                '@'.$this->prefixO.'\Column('.implode(', ', $paramColumn).')'
+            )
+        );
+    }
+
+    public function generateSluggableMethods()
+    {
+        if (!$field = $this->isFieldExists()) {
+            return null;
+        }
+
+        return $this->generateMethod(
+            'getSlug',
+            array('get $slug', '', '@return $'.$field['type'].' $slug'),
+            array(),
+            array('return $this->slug;')
+        );
+    }
 }

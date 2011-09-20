@@ -42,6 +42,34 @@ abstract class GeneratorExtension
         $this->prefixO = $prefixO;
     }
 
+    protected function isFieldExists()
+    {
+        $fields = $this->metadata->getFields();
+
+        if (
+            !isset($this->parameters['column']) ||
+            !isset($fields[$this->parameters['column']])
+        ) {
+            return false;
+        }
+
+        return $fields[$this->parameters['column']];
+    }
+
+    protected function isAssociationExists()
+    {
+        $associations = $this->metadata->getAssociations();
+
+        if (
+            !isset($this->parameters['sourceEntity']) ||
+            !isset($associations[$this->parameters['sourceEntity']])
+        ) {
+            return false;
+        }
+
+        return $associations[$this->parameters['sourceEntity']];
+    }
+
     /**
      * Generate field
      *

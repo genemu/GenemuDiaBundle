@@ -196,6 +196,10 @@ class EntityGenerator extends Generator
                 $annotations[] = '@'.$this->prefix.'\GeneratedValue(strategy="AUTO")';
             }
 
+            if ($extension = $this->generateExtension($metadata, 'AnnotationField')) {
+                $annotations = array_merge($annotations, $extension);
+            }
+
             $code[] = $this->generateField($field['fieldName'], $annotations);
         }
 
@@ -227,7 +231,7 @@ class EntityGenerator extends Generator
                 '@'.$this->prefix.'\\'.$association['type'].'('
             ), $attributes);
 
-            if ($extension = $this->generateExtension($metadata, 'AssociationFields', $association)) {
+            if ($extension = $this->generateExtension($metadata, 'AssociationFields')) {
                 $annotations = array_merge($annotations, $extension);
             }
             $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
@@ -317,7 +321,7 @@ class EntityGenerator extends Generator
      *
      * @return array $extensions
      */
-    protected function generateExtension(ClassMetadataInfo $metadata, $type, $field = null)
+    protected function generateExtension(ClassMetadataInfo $metadata, $type)
     {
         $code = array();
         foreach ($metadata->getExtensions() as $name => $generators) {
@@ -325,7 +329,7 @@ class EntityGenerator extends Generator
                 $generator->setPrefixO($this->prefix);
 
                 if (method_exists($generator, 'generate'.$name.$type)) {
-                    if ($value = $generator->{'generate'.$name.$type}($field?$field:null)) {
+                    if ($value = $generator->{'generate'.$name.$type}()) {
                         if (is_array($value)) {
                             $code = array_merge($code, $value);
                         } else {

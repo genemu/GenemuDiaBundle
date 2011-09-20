@@ -139,12 +139,9 @@ class ORMExtension extends GeneratorExtension
      *
      * @return string
      */
-    public function generateOneToManyAssociationFields(array $field)
+    public function generateOneToManyAssociationFields()
     {
-        if (
-            !isset($this->parameters['sourceEntity']) ||
-            $this->parameters['sourceEntity'] != $field['sourceEntity']
-        ) {
+        if (!$this->isAssociationExists()) {
             return null;
         }
 
