@@ -25,6 +25,14 @@ class EntityGenerator extends Generator
      */
     public function generateEntity(ClassMetadataInfo $metadata)
     {
+        foreach ($metadata->getExtensions() as $name => $generators) {
+            foreach ($generators as $generator) {
+                if (method_exists($generator, 'init'.$name)) {
+                    $generator->{'init'.$name}();
+                }
+            }
+        }
+
         $path = $metadata->getPath();
         $name = $metadata->getName();
 

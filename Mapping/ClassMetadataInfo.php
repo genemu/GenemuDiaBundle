@@ -45,6 +45,7 @@ class ClassMetadataInfo
         $this->name = $name;
         $this->namespace = $namespace;
         $this->path = $path;
+
         $this->annotations = array();
         $this->extensions = array();
         $this->fields = array();
@@ -407,7 +408,11 @@ class ClassMetadataInfo
      */
     public function addField(array $attributes)
     {
-        $field = array();
+        $field = array(
+            'nullable' => 'true',
+            'methods' => array('get', 'set'),
+            'annotations' => array()
+        );
 
         foreach ($attributes as $attr => $value) {
             if ($value) {
@@ -431,6 +436,7 @@ class ClassMetadataInfo
                                     $field['id'] = true;
                                     $field['type'] = 'integer';
                                     $field['methods'] = array('get');
+                                    unset($field['nullable']);
                                     break;
                                 case 'precision':
                                 case 'scale':
@@ -475,10 +481,6 @@ class ClassMetadataInfo
                         break;
                 }
             }
-        }
-
-        if (!isset($field['annotations'])) {
-            $field['annotations'] = array();
         }
 
         $this->fields[$field['fieldName']] = $field;

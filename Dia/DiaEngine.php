@@ -105,10 +105,29 @@ class DiaEngine
                 $class->addField(array(
                     'name' => $attribute->getName(),
                     'type' => $attribute->getType(),
-                    'default' => $attribute->getValue(),
-                    'methods' => array('set', 'get'),
-                    'annotations' => array()
+                    'default' => $attribute->getValue()
                 ));
+            }
+
+            /**
+             * Search extensions to class
+             */
+            foreach ($element->getOperations() as $operation) {
+                $name = $operation->getName();
+
+                $parameters = array();
+                foreach ($operation->getParameters() as $parameter) {
+                    $parameters[$parameter->getName()] = $parameter->getType();
+                }
+
+                foreach ($this->extensions as $prefix => $extension) {
+                    if (in_array($name, $extension['types'])) {
+                        $generator = new $extension['generator']($class, $prefix, $parameters);
+
+                        $class->addUse($extension['namespace'], $prefix);
+                        $class->addExtension($name, $generator);
+                    }
+                }
             }
 
             $this->classes[$element->getId()] = $class;
@@ -138,35 +157,6 @@ class DiaEngine
                 case 1:
                     $connect['from']->addOneToMany($connect['to'], $name);
                     break;
-            }
-        }
-
-        /**
-         * Search extensions to class
-         */
-        foreach ($this->xml->getClasses() as $element) {
-            $class = $this->classes[$element->getId()];
-
-            foreach ($element->getOperations() as $operation) {
-                $name = $operation->getName();
-
-                $parameters = array();
-                foreach ($operation->getParameters() as $parameter) {
-                    $parameters[$parameter->getName()] = $parameter->getType();
-                }
-
-                foreach ($this->extensions as $prefix => $extension) {
-                    if (in_array($name, $extension['types'])) {
-                        $class->addUse($extension['namespace'], $prefix);
-
-                        $generator = new $extension['generator']($class, $prefix, $parameters);
-                        if (method_exists($generator, 'init'.$name)) {
-                            $generator->{'init'.$name}();
-                        }
-
-                        $class->addExtension($name, $generator);
-                    }
-                }
             }
         }
 

@@ -100,9 +100,8 @@ class GedmoExtension extends GeneratorExtension
         }
 
         $this->metadata->updateField($field['fieldName'], array(
-                'annotations' => array('@'.$this->prefix.'\Sluggable()')
-            )
-        );
+            'annotations' => array('@'.$this->prefix.'\Sluggable()')
+        ));
 
         $paramSlug = array();
         foreach ($this->parameters as $attr => $parameter) {

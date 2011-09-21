@@ -18,5 +18,63 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
  */
 class AssertExtension extends GeneratorExtension
 {
+    public function initNotBlank()
+    {
+        $this->updateAnnotation('NotBlank');
+    }
 
+    public function initBlank()
+    {
+        $this->updateAnnotation('Blank');
+    }
+
+    public function initNotNull()
+    {
+        $this->updateAnnotation('NotNull');
+    }
+
+    public function initNull()
+    {
+        $this->updateAnnotation('Null');
+    }
+
+    public function initTrue()
+    {
+        $this->updateAnnotation('True');
+    }
+
+    public function initFalse()
+    {
+        $this->updateAnnotation('False');
+    }
+
+    public function initType()
+    {
+        $this->updateAnnotation('Type');
+    }
+
+    protected function updateAnnotation($type)
+    {
+        if (!$field = $this->isFieldExists()) {
+            return null;
+        }
+
+        unset($this->parameters['column']);
+
+        $annotations = array('@'.$this->prefix.'\\'.$type.'()');
+        $parameters = array();
+        foreach ($this->parameters as $attr => $value) {
+            $parameters[] = '<spaces>'.$attr.'="'.$value.'",';
+        }
+
+        if ($parameters) {
+            $parameters[count($parameters)-1] = substr(end($parameters), 0, -1);
+
+            $annotations = array('@'.$this->prefix.'\\'.$type.'(');
+            $annotations = array_merge($annotations, $parameters);
+            $annotations[] = ')';
+        }
+
+        $this->metadata->updateField($field['fieldName'], array('annotations' => $annotations));
+    }
 }

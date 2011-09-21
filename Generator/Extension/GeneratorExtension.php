@@ -20,7 +20,6 @@ abstract class GeneratorExtension
 {
     protected $metadata;
     protected $prefix;
-    protected $prefixO;
     protected $parameters;
 
     /**
@@ -35,11 +34,6 @@ abstract class GeneratorExtension
         $this->metadata = $metadata;
         $this->prefix = $prefix;
         $this->parameters = $parameters;
-    }
-
-    public function setPrefixO($prefixO)
-    {
-        $this->prefixO = $prefixO;
     }
 
     protected function isFieldExists()
