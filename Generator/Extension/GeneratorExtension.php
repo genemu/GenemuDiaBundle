@@ -36,6 +36,11 @@ abstract class GeneratorExtension
         $this->parameters = $parameters;
     }
 
+    /**
+     * Is Field exists
+     *
+     * @return mixed $field
+     */
     protected function isFieldExists()
     {
         $fields = $this->metadata->getFields();
@@ -50,6 +55,11 @@ abstract class GeneratorExtension
         return $fields[$this->parameters['column']];
     }
 
+    /**
+     * Is association exists
+     *
+     * @return mixed $association
+     */
     protected function isAssociationExists()
     {
         $associations = $this->metadata->getAssociations();
@@ -129,6 +139,14 @@ abstract class GeneratorExtension
         return implode("\n", $code);
     }
 
+    /**
+     * Generate all methods to field
+     *
+     * @param array $methods
+     * @param array $parameters
+     *
+     * @return array $code
+     */
     protected function generateMethodFields(array $methods, array $parameters)
     {
         $name = $parameters['name'];
@@ -145,8 +163,11 @@ abstract class GeneratorExtension
                 $annotation = '@return '.$parameters['type_int'].' $'.$name;
             } else {
                 $return = '$this->'.$name.' = $'.$name.';';
+                if ($method == 'add') {
+                    $return = '$this->'.$name.'->add($'.$name.');';
+                }
                 $annotation = '@param '.$parameters['target'].' $'.$name;
-                $params = array($parameters['type'].' $'.$name);
+                $params = array(($parameters['type']?$parameters['type'].' ':'').'$'.$name);
             }
 
             $code[] = $this->generateMethod(

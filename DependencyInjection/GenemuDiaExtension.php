@@ -14,6 +14,11 @@ namespace Genemu\Bundle\DiaBundle\DependencyInjection;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
+/**
+ * GenemuDiaExtension
+ *
+ * @author Olivier Chauvel <olchauvel@gmail.com>
+ */
 class GenemuDiaExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container)
@@ -57,14 +62,13 @@ class GenemuDiaExtension extends Extension
                     'Time',
                     'DateTime',
                     'Choice',
-                    'Collection',
                     'Language',
                     'Locale',
                     'Country',
                     'File',
+                    'Image',
                     'Callback',
-                    'Valid',
-                    'All'
+                    'Valid'
                 )
             ),
             'DoctrineAssert' => array(

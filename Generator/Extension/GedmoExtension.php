@@ -20,7 +20,6 @@ class GedmoExtension extends GeneratorExtension
 {
     /**
      * Initialization Tree
-     * Add use ArrayCollection
      */
     public function initTree()
     {
@@ -125,6 +124,41 @@ class GedmoExtension extends GeneratorExtension
                 'type' => 'string('.$length.')'.$unique.' NOTNULL',
                 'methods' => array('get'),
                 'annotations' => array('@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')')
+            )
+        );
+    }
+
+    /**
+     * Initializtion Loggable
+     */
+    public function initLoggable()
+    {
+        $this->metadata->addAnnotation('@'.$this->prefix.'\Loggable()');
+    }
+
+    /**
+     * Initialization Translatable
+     */
+    public function initTranslatable()
+    {
+        if (!isset($this->parameters['columns'])) {
+            return null;
+        }
+
+        foreach (explode(',', $this->parameters['columns']) as $column) {
+            if (array_key_exists($column, $this->metadata->getFields())) {
+                $this->metadata->updateField($column, array(
+                    'annotations' => array('@'.$this->prefix.'\Translatable()')
+                ));
+            }
+        }
+
+        $this->metadata->addField(
+            array(
+                'name' => 'locale',
+                'type' => 'string NOTNULL',
+                'methods' => array('get', 'setTranslatable'),
+                'annotations' => array('@'.$this->prefix.'\Locale()')
             )
         );
     }

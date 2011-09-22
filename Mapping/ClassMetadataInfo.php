@@ -504,7 +504,7 @@ class ClassMetadataInfo
 
                 if (is_array($old) && is_array($values)) {
                     $this->fields[$name][$type] = array_merge($old, $values);
-                } else {
+                } elseif (is_string($old) && is_string($values)) {
                     $this->fields[$name][$type] = $values;
                 }
             }
@@ -544,7 +544,7 @@ class ClassMetadataInfo
             'type' => 'OneToMany',
             'type_int' => 'Doctrine\Common\Collections\ArrayCollection',
             'fieldName' => $nameTo,
-            'targetEntity' => $this->getTargetEntity(),
+            'targetEntity' => $class->getTargetEntity(),
             'mappedBy' => $nameFrom,
             'methods' => array('add', 'get'),
             'annotations' => array()
@@ -553,7 +553,7 @@ class ClassMetadataInfo
         $class->addAssociation($nameFrom, array(
             'type' => 'ManyToOne',
             'fieldName' => $nameFrom,
-            'targetEntity' => $class->getTargetEntity(),
+            'targetEntity' => $this->getTargetEntity(),
             'inversedBy' => $nameTo,
             'methods' => array('set', 'get'),
             'annotations' => array()

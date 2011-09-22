@@ -66,7 +66,7 @@ class ORMExtension extends GeneratorExtension
             );
 
             if (isset($field['id']) && $field['id']) {
-                $annotations[] = '@'.$this->prefix.'\Id';
+                $annotations[] = '@'.$this->prefix.'\Id()';
                 $annotations[] = '@'.$this->prefix.'\GeneratedValue(strategy="AUTO")';
             }
 

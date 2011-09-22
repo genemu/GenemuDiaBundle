@@ -20,10 +20,15 @@ use Genemu\Bundle\DiaBundle\Dia\DiaEngine;
 use Genemu\Bundle\DiaBundle\Generator\EntityGenerator;
 
 /**
+ * DiaCreateEntityCommand
+ *
  * @author Olivier Chauvel <olchauvel@gmail.com>
  */
 class DiaCreateEntityCommand extends ContainerAwareCommand
 {
+    /**
+     * {@inheritdoc}
+     */
     protected function configure()
     {
         $this
@@ -32,6 +37,9 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
             ->addArgument('file', InputArgument::REQUIRED, 'file');
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $container = $this->getContainer();
@@ -46,6 +54,9 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
         }
     }
 
+    /**
+     * Create Entity generator
+     */
     protected function getEntityGenerator()
     {
         $generator = new EntityGenerator();

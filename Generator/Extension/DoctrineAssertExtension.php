@@ -18,5 +18,20 @@ use Genemu\Bundle\DiaBundle\Mapping\ClassMetadataInfo;
  */
 class DoctrineAssertExtension extends GeneratorExtension
 {
+    /**
+     * Initialization UniqueEntity
+     */
+    public function initUniqueEntity()
+    {
+        if (!isset($this->parameters['fields'])) {
+            return null;
+        }
 
+        $fields = array();
+        foreach ($this->parameters['fields'] as $field) {
+            $fields[] = '"'.$field.'"';
+        }
+
+        $this->metadata->addAnnotation('@'.$this->prefix.'\UniqueEntity('.implode(', ', $fields).')');
+    }
 }
