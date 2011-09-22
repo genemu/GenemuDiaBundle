@@ -522,6 +522,27 @@ class ClassMetadataInfo
         $this->associations[$name] = $attributes;
     }
 
+    public function updateAssociation($name, array $attributes)
+    {
+        if (!isset($this->associations[$name])) {
+            return;
+        }
+
+        foreach ($attributes as $type => $values) {
+            if (isset($this->associations[$name][$type])) {
+                $old = $this->associations[$name][$type];
+
+                if (is_array($old) && is_array($values)) {
+                    $this->associations[$name][$type] = array_merge($old, $values);
+                } elseif (is_string($old) && is_string($values)) {
+                    $this->associations[$name][$type] = $values;
+                }
+            } else {
+                $this->associations[$name][$type] = $values;
+            }
+        }
+    }
+
     /**
      * Add One To Many
      *
@@ -538,12 +559,12 @@ class ClassMetadataInfo
         }
 
         $nameFrom = strtolower($name?$name:$this->name);
-        $nameTo = strtolower($name?$name:$class->getName()).'s';
+        $nameTo = strtolower($name?$name:$class->getName());
 
         $this->associations[$nameTo] = array(
             'type' => 'OneToMany',
             'type_int' => 'Doctrine\Common\Collections\ArrayCollection',
-            'fieldName' => $nameTo,
+            'fieldName' => $nameTo.'s',
             'targetEntity' => $class->getTargetEntity(),
             'mappedBy' => $nameFrom,
             'methods' => array('add', 'get'),
@@ -554,7 +575,7 @@ class ClassMetadataInfo
             'type' => 'ManyToOne',
             'fieldName' => $nameFrom,
             'targetEntity' => $this->getTargetEntity(),
-            'inversedBy' => $nameTo,
+            'inversedBy' => $nameTo.'s',
             'methods' => array('set', 'get'),
             'annotations' => array()
         ));

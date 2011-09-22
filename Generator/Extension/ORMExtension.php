@@ -78,7 +78,13 @@ class ORMExtension extends GeneratorExtension
         foreach ($this->metadata->getAssociations() as $association) {
             $attributes = array();
             foreach ($association as $attr => $value) {
-                if (in_array($attr, array('targetEntity', 'mappedBy', 'inversedBy', 'orphanRemoval', 'fetch'))) {
+                if (in_array($attr, array(
+                    'targetEntity',
+                    'mappedBy',
+                    'inversedBy',
+                    'orphanRemoval',
+                    'fetch'
+                ))) {
                     $attributes[] = '<spaces>'.$attr.'="'.$value.'",';
                 } elseif ($attr == 'cascade') {
                     $cascades = array();
@@ -98,6 +104,13 @@ class ORMExtension extends GeneratorExtension
 
             $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
             $annotations[] = ')';
+
+            if (isset($association['orderBy'])) {
+                $order = $association['orderBy'];
+
+                $annotations[] = '@'.$this->prefix.'\OrderBy({"'.$order['name'].'" = "'.$order['value'].'"})';
+            }
+
             $annotations = array_merge($annotations, $association['annotations']);
 
             $code[] = $this->generateField($association['fieldName'], $annotations);
@@ -261,18 +274,22 @@ class ORMExtension extends GeneratorExtension
      */
     public function initOneToMany()
     {
-        if (!$field = $this->isAssociationExists()) {
+        if (!$this->isAssociationExists()) {
             return null;
         }
 
+        $field = array();
         foreach ($this->parameters as $attr => $value) {
             if ($attr == 'cascade') {
                 $field[$attr] = explode(',', $value);
             } elseif (in_array($attr, array('orphanRemoval', 'fetch'))) {
                 $field[$attr] = $value;
+            } elseif ($attr == 'orderBy') {
+                list($name, $value) = explode('=', $value);
+                $field[$attr] = array('name' => $name, 'value' => $value);
             }
         }
 
-        $this->metadata->updateAssociation($this->parameters['sourceEntity'], $field);
+        $this->metadata->updateAssociation(strtolower($this->parameters['sourceEntity']), $field);
     }
 }

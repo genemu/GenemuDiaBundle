@@ -66,12 +66,12 @@ abstract class GeneratorExtension
 
         if (
             !isset($this->parameters['sourceEntity']) ||
-            !isset($associations[$this->parameters['sourceEntity']])
+            !isset($associations[strtolower($this->parameters['sourceEntity'])])
         ) {
             return false;
         }
 
-        return $associations[$this->parameters['sourceEntity']];
+        return $associations[strtolower($this->parameters['sourceEntity'])];
     }
 
     /**
