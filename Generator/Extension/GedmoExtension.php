@@ -25,7 +25,7 @@ class GedmoExtension extends GeneratorExtension
     {
         $target = $this->metadata->getTargetEntity();
 
-        $this->metadata->addUse('Doctrine\Common\Collections\ArrayCollection', 'ArrayCollection');
+        $this->metadata->addUse('Collection');
         $this->metadata->addAnnotation('@'.$this->prefix.'\Tree("nested")');
 
         foreach (array('Root' => 'root', 'Left' => 'lft', 'Right' => 'rgt', 'Level' => 'lvl') as $name => $field) {
