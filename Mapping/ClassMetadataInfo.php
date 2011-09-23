@@ -329,6 +329,11 @@ class ClassMetadataInfo
         $this->annotations[] = $annotation;
     }
 
+    /**
+     * Remove annotation class
+     *
+     * @param $integer $index
+     */
     public function removeAnnotation($index)
     {
         if (!isset($this->annotations[$index])) {

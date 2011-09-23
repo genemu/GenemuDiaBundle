@@ -148,7 +148,7 @@ class GedmoExtension extends GeneratorExtension
         foreach (explode(',', $this->parameters['columns']) as $column) {
             if (array_key_exists($column, $this->metadata->getFields())) {
                 $this->metadata->updateField($column, array(
-                    'annotations' => array('@'.$this->prefix.'\Translatable()')
+                    'annotations' => array('@'.$this->prefix.'\Translatable()', '')
                 ));
             }
         }
@@ -156,7 +156,7 @@ class GedmoExtension extends GeneratorExtension
         $this->metadata->addField(
             array(
                 'name' => 'locale',
-                'type' => 'string NOTNULL',
+                'type' => null,
                 'methods' => array('get', 'setTranslatable'),
                 'annotations' => array('@'.$this->prefix.'\Locale()')
             )

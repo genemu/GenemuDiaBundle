@@ -59,11 +59,15 @@ class ORMExtension extends GeneratorExtension
                 }
             }
 
-            $annotations = array(
-                '@var '.$field['type'].' $'.$field['fieldName'],
-                '',
-                '@'.$this->prefix.'\Column('.implode(', ', $params).')'
-            );
+            if (isset($field['type'])) {
+                $annotations = array(
+                    '@var '.$field['type'].' $'.$field['fieldName'],
+                    '',
+                    '@'.$this->prefix.'\Column('.implode(', ', $params).')'
+                );
+            } else {
+                $annotations = array('@var $'.$field['fieldName']);
+            }
 
             if (isset($field['id']) && $field['id']) {
                 $annotations[] = '@'.$this->prefix.'\Id()';
@@ -174,8 +178,14 @@ class ORMExtension extends GeneratorExtension
 
         foreach ($this->metadata->getFields() as $field) {
             $name = $field['fieldName'];
-            $typeInt = (isset($field['type_int']))?$field['type_int']:$field['type'];
-            $type = ($field['type'] != $typeInt)?$typeInt:'';
+
+            if (isset($field['type'])) {
+                $typeInt = (isset($field['type_int']))?$field['type_int']:$field['type'];
+                $type = ($field['type'] != $typeInt)?$typeInt:'';
+            } else {
+                $typeInt = isset($field['type_int'])?$field['type_int']:'';
+                $type = $typeInt;
+            }
 
             $code = array_merge($code, $this->generateMethodFields(
                 $field['methods'],
