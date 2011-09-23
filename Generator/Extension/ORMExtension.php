@@ -114,18 +114,18 @@ class ORMExtension extends GeneratorExtension
             if (isset($association['joinColumn'])) {
                 $join = $association['joinColumn'];
 
-                $annotations[] = '@'.$this->prefix.'\JoinColumn(';
-
                 if ($association['type'] == 'ManyToOne') {
+                    $annotations[] = '@'.$this->prefix.'\JoinColumn(';
                     foreach ($join as $attr => $value) {
                         $annotations[] = '<spaces>'.$attr.'="'.$value.'",';
                     }
                 } elseif ($association['type'] == 'ManyToMany') {
+                    $annotations[] = '@'.$this->prefix.'\JoinTable(';
                     foreach ($join as $type => $values) {
                         if ($type == 'name') {
                             $annotations[] = '<spaces>'.$type.'="'.$values.'",';
                         } else {
-                            $annotations[] = '<spaces>'.$type.'={@'.$this->prefix.'\\'.$type.'(';
+                            $annotations[] = '<spaces>'.$type.'={@'.$this->prefix.'\JoinColumn(';
                             foreach ($values as $attr => $value) {
                                 $annotations[] = '<spaces><spaces>'.$attr.'="'.$value.'",';
                             }
@@ -193,6 +193,10 @@ class ORMExtension extends GeneratorExtension
                 $field['methods'],
                 array('name' => $name, 'type' => $type, 'type_int' => $typeInt, 'target' => $target)
             ));
+        }
+
+        foreach ($this->metadata->getMethods() as $name => $values) {
+            $code[] = $this->generateMethod($name, $values['annotations'], $values['attributes'], $values['contents']);
         }
 
         return $code;

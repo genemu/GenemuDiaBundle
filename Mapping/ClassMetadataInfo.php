@@ -31,6 +31,7 @@ class ClassMetadataInfo
     protected $annotations;
     protected $fields;
     protected $associations;
+    protected $methods;
 
     /**
      * Construct
@@ -50,6 +51,7 @@ class ClassMetadataInfo
         $this->extensions = array();
         $this->fields = array();
         $this->associations = array();
+        $this->methods = array();
     }
 
     /**
@@ -248,6 +250,16 @@ class ClassMetadataInfo
     }
 
     /**
+     * Get methods
+     *
+     * @return array $methods
+     */
+    public function getMethods()
+    {
+        return $this->methods;
+    }
+
+    /**
      * Is abstract
      *
      * @return boolean $isAbstract
@@ -317,6 +329,15 @@ class ClassMetadataInfo
         $this->annotations[] = $annotation;
     }
 
+    public function removeAnnotation($index)
+    {
+        if (!isset($this->annotations[$index])) {
+            return null;
+        }
+
+        unset($this->annotations[$index]);
+    }
+
     /**
      * Add annotations class
      *
@@ -325,6 +346,23 @@ class ClassMetadataInfo
     public function addAnnotations(array $annotations)
     {
         $this->annotations = array_merge($this->annotations, $annotations);
+    }
+
+    /**
+     * Add method class
+     *
+     * @param string $name
+     * @param array  $annotations
+     * @param array  $attributes
+     * @param array  $contents
+     */
+    public function addMethod($name, array $annotations, array $attributes, array $contents)
+    {
+        $this->methods[$name] = array(
+            'annotations' => $annotations,
+            'attributes' => $attributes,
+            'contents' => $contents
+        );
     }
 
     /**
@@ -377,6 +415,16 @@ class ClassMetadataInfo
     public function addChildren(ClassMetadataInfo $children)
     {
         $this->children[$children->getTargetEntity()] = $children;
+    }
+
+    /**
+     * Set children
+     *
+     * @param array $children
+     */
+    public function setChildren(array $children)
+    {
+        $this->children = $children;
     }
 
     /**
