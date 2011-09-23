@@ -193,7 +193,8 @@ class ClassMetadataInfo
      */
     public function getCodeTable($spaces = '')
     {
-        $table = array($spaces.'name="'.$this->table['name'].'",');
+        $prefix = isset($this->table['prefix'])?$this->table['prefix'].'_':'';
+        $table = array($spaces.'name="'.$prefix.$this->table['name'].'",');
 
         foreach ($this->table['annotations'] as $annotation) {
             $table[] = $spaces.$annotation.',';
@@ -504,7 +505,7 @@ class ClassMetadataInfo
 
                 if (is_array($old) && is_array($values)) {
                     $this->fields[$name][$type] = array_merge($old, $values);
-                } elseif (is_string($old) && is_string($values)) {
+                } else {
                     $this->fields[$name][$type] = $values;
                 }
             }
@@ -522,6 +523,12 @@ class ClassMetadataInfo
         $this->associations[$name] = $attributes;
     }
 
+    /**
+     * Update association
+     *
+     * @param string $name
+     * @param array  $attributes
+     */
     public function updateAssociation($name, array $attributes)
     {
         if (!isset($this->associations[$name])) {
@@ -534,7 +541,7 @@ class ClassMetadataInfo
 
                 if (is_array($old) && is_array($values)) {
                     $this->associations[$name][$type] = array_merge($old, $values);
-                } elseif (is_string($old) && is_string($values)) {
+                } else {
                     $this->associations[$name][$type] = $values;
                 }
             } else {
@@ -558,6 +565,7 @@ class ClassMetadataInfo
             $class->addUse($this->gettargetEntity());
         }
 
+
         $nameFrom = strtolower($name?$name:$this->name);
         $nameTo = strtolower($name?$name:$class->getName());
 
@@ -576,6 +584,10 @@ class ClassMetadataInfo
             'fieldName' => $nameFrom,
             'targetEntity' => $this->getTargetEntity(),
             'inversedBy' => $nameTo.'s',
+            'joinColumn' => array(
+                'name' => $nameFrom.'_id',
+                'referencedColumnName' => 'id'
+            ),
             'methods' => array('set', 'get'),
             'annotations' => array()
         ));
@@ -596,14 +608,16 @@ class ClassMetadataInfo
             $class->addUse($this->gettargetEntity());
         }
 
-        $nameTo = strtolower($class->getName()).'s';
-        $nameFrom = strtolower($this->name).'s';
+        $prefix = isset($this->table['prefix'])?$this->table['prefix'].'_':'';
+
+        $nameTo = strtolower($class->getName());
+        $nameFrom = strtolower($this->name);
 
         $this->associations[$nameTo] = array(
             'type' => 'ManyToMany',
-            'fieldName' => $nameTo,
+            'fieldName' => $nameTo.'s',
             'targetEntity' => $class->getTargetEntity(),
-            'mappedBy' => $nameFrom,
+            'mappedBy' => $nameFrom.'s',
             'sourceEntity' => $class->getName(),
             'methods' => array('add', 'get'),
             'annotations' => array()
@@ -611,10 +625,21 @@ class ClassMetadataInfo
 
         $class->addAssociation($nameFrom, array(
             'type' => 'ManyToMany',
-            'fieldName' => $nameFrom,
+            'fieldName' => $nameFrom.'s',
             'targetEntity' => $this->getTargetEntity(),
-            'inversedBy' => $nameTo,
+            'inversedBy' => $nameTo.'s',
             'sourceEntity' => $this->name,
+            'joinColumn' => array(
+                'name' => $prefix.$nameTo.'s_'.$nameFrom.'s',
+                'joinColumns' => array(
+                    'name' => $nameTo.'_id',
+                    'referencedColumnName' => 'id'
+                ),
+                'inverseJoinColumns' => array(
+                    'name' => $nameFrom.'_id',
+                    'referencedColumnName' => 'id'
+                )
+            ),
             'methods' => array('add', 'get'),
             'annotations' => array()
         ));

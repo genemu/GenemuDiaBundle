@@ -86,7 +86,8 @@ class DiaEngine
 
             $class = new ClassMetadataInfo($name, $namespace, $path, $abstract);
             $class->setTable(array(
-                'name' => $prefix.'_'.strtolower($name),
+                'prefix' => $prefix,
+                'name' => strtolower($name),
                 'annotations' => array()
             ));
 

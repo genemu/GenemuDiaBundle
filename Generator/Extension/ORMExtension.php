@@ -111,6 +111,34 @@ class ORMExtension extends GeneratorExtension
                 $annotations[] = '@'.$this->prefix.'\OrderBy({"'.$order['name'].'" = "'.$order['value'].'"})';
             }
 
+            if (isset($association['joinColumn'])) {
+                $join = $association['joinColumn'];
+
+                $annotations[] = '@'.$this->prefix.'\JoinColumn(';
+
+                if ($association['type'] == 'ManyToOne') {
+                    foreach ($join as $attr => $value) {
+                        $annotations[] = '<spaces>'.$attr.'="'.$value.'",';
+                    }
+                } elseif ($association['type'] == 'ManyToMany') {
+                    foreach ($join as $type => $values) {
+                        if ($type == 'name') {
+                            $annotations[] = '<spaces>'.$type.'="'.$values.'",';
+                        } else {
+                            $annotations[] = '<spaces>'.$type.'={@'.$this->prefix.'\\'.$type.'(';
+                            foreach ($values as $attr => $value) {
+                                $annotations[] = '<spaces><spaces>'.$attr.'="'.$value.'",';
+                            }
+
+                            $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
+                            $annotations[] = '<spaces>)},';
+                        }
+                    }
+                }
+                $annotations[count($annotations)-1] = substr(end($annotations), 0, -1);
+                $annotations[] = ')';
+            }
+
             $annotations = array_merge($annotations, $association['annotations']);
 
             $code[] = $this->generateField($association['fieldName'], $annotations);
