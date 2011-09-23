@@ -23,6 +23,7 @@ class DiaEngine
     protected $extensions;
     protected $xml;
     protected $classes;
+    protected $use;
 
     /**
      * Construct
@@ -34,6 +35,7 @@ class DiaEngine
     {
         $this->kernel = $kernel;
         $this->registry = $registry;
+        $this->use = 'ORM';
     }
 
     /**
@@ -61,6 +63,16 @@ class DiaEngine
     }
 
     /**
+     * Set use
+     *
+     * @param string $type
+     */
+    public function setUse($type)
+    {
+        $this->use = $type;
+    }
+
+    /**
      * Get classes
      *
      * @return array $classes
@@ -75,7 +87,7 @@ class DiaEngine
          * Search all class to xml document
          */
         foreach ($this->xml->getClasses() as $element) {
-            $orm = $this->extensions['ORM'];
+            $orm = $this->extensions[$this->use];
 
             $name = $element->getName();
             $abstract = $element->isAbstract();
@@ -83,8 +95,9 @@ class DiaEngine
             $package = $this->xml->getNamePackage($element);
 
             $bundle = $this->kernel->getBundle($package);
-            $path = $bundle->getPath().'/Entity';
-            $namespace = $this->registry->getEntityNamespace($package);
+            $type = ($this->use == 'ORM')?'Entity':'Document';
+            $path = $bundle->getPath().'/'.$type;
+            $namespace = $bundle->getNamespace().'\\'.$type;
 
             $prefix = str_replace('Bundle', '', $bundle->getName());
             $prefix = preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $prefix);
@@ -95,10 +108,10 @@ class DiaEngine
                 'name' => strtolower($name),
                 'annotations' => array()
             ));
-            $class->addUse($orm['namespace'], 'ORM');
+            $class->addUse($orm['namespace'], $this->use);
             $class->setExtensions(
                 array('Annotations', 'Fields', 'Methods'),
-                new $orm['generator']($class, 'ORM')
+                new $orm['generator']($class, $this->use)
             );
 
             /**
@@ -124,7 +137,13 @@ class DiaEngine
                 }
 
                 foreach ($this->extensions as $prefix => $extension) {
-                    if (in_array($name, $extension['types'])) {
+                    if (
+                        (
+                            in_array($name, $extension['types']) &&
+                            !in_array($prefix, array('ORM', 'MongoDB'))
+                        ) ||
+                        $this->use == $prefix
+                    ) {
                         $generator = $extension['generator'];
                         $generator = new $generator($class, $prefix, $params);
 

@@ -15,6 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 use Genemu\Bundle\DiaBundle\Dia\DiaEngine;
 use Genemu\Bundle\DiaBundle\Generator\EntityGenerator;
@@ -34,7 +35,8 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
         $this
             ->setName('dia:entity:create')
             ->setDescription('Create entity for schema dia')
-            ->addArgument('file', InputArgument::REQUIRED, 'file');
+            ->addArgument('file', InputArgument::REQUIRED, 'file')
+            ->addOption('type', false, InputOption::VALUE_NONE, 'type');
     }
 
     /**
@@ -50,6 +52,11 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
         $dia = new DiaEngine($kernel, $registry);
         $dia->loadFile($input->getArgument('file'));
         $dia->setExtensions($container->getParameter('genemu_dia.extensions'));
+
+        $dia->setUse('ORM');
+        if ($input->getOption('type') == 'mongo') {
+            $dia->setUse('MongoDB');
+        }
 
         foreach ($dia->getClasses() as $class) {
             $generator = $this->getEntityGenerator();

@@ -29,6 +29,7 @@ class GenemuDiaExtension extends Extension
         $this->extensions = array();
 
         $this->addORMExtension();
+        $this->addMongoDBExtension();
         $this->addAssertExtension();
         $this->addDoctrineAssertExtension();
         $this->addGedmoExtension();
@@ -58,6 +59,19 @@ class GenemuDiaExtension extends Extension
         );
 
         $this->extensions['ORM'] = array(
+            'generator' => $generator,
+            'namespace' => $namespace,
+            'types' => $types
+        );
+    }
+
+    protected function addMongoDBExtension()
+    {
+        $generator = $this->namespace.'MongoBDExtension';
+        $namespace = 'Doctrine\ODM\MongoDB\Mapping\Annotations';
+        $types = array();
+
+        $this->extensions['MongoDB'] = array(
             'generator' => $generator,
             'namespace' => $namespace,
             'types' => $types
