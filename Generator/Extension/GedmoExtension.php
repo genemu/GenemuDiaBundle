@@ -24,11 +24,17 @@ class GedmoExtension extends GeneratorExtension
     public function initTree()
     {
         $target = $this->metadata->getTargetEntity();
+        $fields = array(
+            'Root' => 'root',
+            'Left' => 'lft',
+            'Right' => 'rgt',
+            'Level' => 'lvl'
+        );
 
         $this->metadata->addUse('Collection');
         $this->metadata->addAnnotation('@'.$this->prefix.'\Tree("nested")');
 
-        foreach (array('Root' => 'root', 'Left' => 'lft', 'Right' => 'rgt', 'Level' => 'lvl') as $name => $field) {
+        foreach ($fields as $name => $field) {
             $this->metadata->addField(
                 array(
                     'name' => $field,
@@ -75,7 +81,9 @@ class GedmoExtension extends GeneratorExtension
                 'name' => 'createdAt',
                 'type' => 'datetime NOTNULL',
                 'methods' => array('get'),
-                'annotations' => array('@'.$this->prefix.'\Timestampable(on="create")')
+                'annotations' => array(
+                    '@'.$this->prefix.'\Timestampable(on="create")'
+                )
             )
         );
 
@@ -84,7 +92,9 @@ class GedmoExtension extends GeneratorExtension
                 'name' => 'updatedAt',
                 'type' => 'datetime NOTNULL',
                 'methods' => array('get'),
-                'annotations' => array('@'.$this->prefix.'\Timestampable(on="update")')
+                'annotations' => array(
+                    '@'.$this->prefix.'\Timestampable(on="update")'
+                )
             )
         );
     }
@@ -123,7 +133,9 @@ class GedmoExtension extends GeneratorExtension
                 'name' => 'slug',
                 'type' => 'string('.$length.')'.$unique.' NOTNULL',
                 'methods' => array('get'),
-                'annotations' => array('@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')')
+                'annotations' => array(
+                    '@'.$this->prefix.'\Slug('.implode(', ', $paramSlug).')'
+                )
             )
         );
     }
@@ -148,7 +160,10 @@ class GedmoExtension extends GeneratorExtension
         foreach (explode(',', $this->parameters['columns']) as $column) {
             if (array_key_exists($column, $this->metadata->getFields())) {
                 $this->metadata->updateField($column, array(
-                    'annotations' => array('@'.$this->prefix.'\Translatable()', '')
+                    'annotations' => array(
+                        '@'.$this->prefix.'\Translatable()',
+                        ''
+                    )
                 ));
             }
         }

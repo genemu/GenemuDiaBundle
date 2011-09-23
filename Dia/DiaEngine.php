@@ -75,29 +75,31 @@ class DiaEngine
          * Search all class to xml document
          */
         foreach ($this->xml->getClasses() as $element) {
+            $orm = $this->extensions['ORM'];
+
             $name = $element->getName();
             $abstract = $element->isAbstract();
-            $bundle = $this->kernel->getBundle($this->xml->getNamePackage($element));
+
+            $package = $this->xml->getNamePackage($element);
+
+            $bundle = $this->kernel->getBundle($package);
             $path = $bundle->getPath().'/Entity';
-            $namespace = $this->registry->getEntityNamespace($bundle->getName());
+            $namespace = $this->registry->getEntityNamespace($package);
 
             $prefix = str_replace('Bundle', '', $bundle->getName());
-            $prefix = strtolower(preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $prefix));
+            $prefix = preg_replace('/(?<=\\w)(?=[A-Z])/', '_$1', $prefix);
 
             $class = new ClassMetadataInfo($name, $namespace, $path, $abstract);
             $class->setTable(array(
-                'prefix' => $prefix,
+                'prefix' => strtolower($prefix),
                 'name' => strtolower($name),
                 'annotations' => array()
             ));
-
-            $generator = new $this->extensions['ORM']['generator']($class, 'ORM');
-            $class->setExtensions(array(
-                'Annotations',
-                'Fields',
-                'Methods'
-            ), $generator);
-            $class->addUse($this->extensions['ORM']['namespace'], 'ORM');
+            $class->addUse($orm['namespace'], 'ORM');
+            $class->setExtensions(
+                array('Annotations', 'Fields', 'Methods'),
+                new $orm['generator']($class, 'ORM')
+            );
 
             /**
              * Search attributes to class
@@ -116,14 +118,15 @@ class DiaEngine
             foreach ($element->getOperations() as $operation) {
                 $name = $operation->getName();
 
-                $parameters = array();
+                $params = array();
                 foreach ($operation->getParameters() as $parameter) {
-                    $parameters[$parameter->getName()] = $parameter->getType();
+                    $params[$parameter->getName()] = $parameter->getType();
                 }
 
                 foreach ($this->extensions as $prefix => $extension) {
                     if (in_array($name, $extension['types'])) {
-                        $generator = new $extension['generator']($class, $prefix, $parameters);
+                        $generator = $extension['generator'];
+                        $generator = new $generator($class, $prefix, $params);
 
                         $class->addUse($extension['namespace'], $prefix);
                         $class->addExtension($name, $generator);
@@ -148,7 +151,10 @@ class DiaEngine
          * Search associations
          */
         foreach ($this->xml->getAssociations() as $association) {
-            $connect = $association->getConnection($this->classes, 'association');
+            $connect = $association->getConnection(
+                $this->classes,
+                'association'
+            );
             $name = $association->getName();
 
             switch ($association->getAssocType()) {

@@ -167,7 +167,9 @@ abstract class GeneratorExtension
                     $return = '$this->'.$name.'->add($'.$name.');';
                 }
                 $annotation = '@param '.$parameters['target'].' $'.$name;
-                $params = array(($parameters['type']?$parameters['type'].' ':'').'$'.$name);
+                $params = array(
+                    ($parameters['type']?$parameters['type'].' ':'').'$'.$name
+                );
             }
 
             $code[] = $this->generateMethod(

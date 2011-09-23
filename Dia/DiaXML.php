@@ -25,7 +25,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getPackages()
     {
-        return $this->xpath($this->toXPath('object', 'UML - LargePackage', ''));
+        return $this->xpath('object', 'UML - LargePackage', '');
     }
 
     /**
@@ -35,7 +35,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getClasses()
     {
-        return $this->xpath($this->toXPath('object', 'UML - Class', ''));
+        return $this->xpath('object', 'UML - Class', '');
     }
 
     /**
@@ -45,7 +45,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getGeneralization()
     {
-        return $this->xpath($this->toXPath('object', 'UML - Generalization', ''));
+        return $this->xpath('object', 'UML - Generalization', '');
     }
 
     /**
@@ -55,7 +55,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getAssociations()
     {
-        return $this->xpath($this->toXPath('object', 'UML - Association', ''));
+        return $this->xpath('object', 'UML - Association', '');
     }
 
     /**
@@ -65,7 +65,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getAttributes()
     {
-        return $this->xpath($this->toXPath('composite', 'umlattribute'));
+        return $this->xpath('composite', 'umlattribute');
     }
 
     /**
@@ -75,7 +75,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getOperations()
     {
-        return $this->xpath($this->toXPath('composite', 'umloperation'));
+        return $this->xpath('composite', 'umloperation');
     }
 
     /**
@@ -85,7 +85,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getParameters()
     {
-        return $this->xpath($this->toXPath('composite', 'umlparameter'));
+        return $this->xpath('composite', 'umlparameter');
     }
 
     /**
@@ -99,13 +99,23 @@ class DiaXML extends \SimpleXMLElement
     }
 
     /**
+     * Get val
+     *
+     * @return string val attribute
+     */
+    public function getVal()
+    {
+        return (string) $this->attributes()->val;
+    }
+
+    /**
      * Get name
      *
      * @return string\null $name
      */
     public function getName()
     {
-        $element = $this->xpath($this->toXPath('string', 'name'));
+        $element = $this->xpath('string', 'name');
 
         return $element?str_replace('#', '', (string) $element[0]):null;
     }
@@ -117,7 +127,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getType()
     {
-        $element = $this->xpath($this->toXPath('string', 'type'));
+        $element = $this->xpath('string', 'type');
 
         return $element?str_replace('#', '', (string) $element[0]):null;
     }
@@ -129,9 +139,9 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getAssocType()
     {
-        $element = $this->xpath($this->toXPath('enum', 'assoc_type'));
+        $element = $this->xpath('enum', 'assoc_type');
 
-        return $element?(int) $element[0]->attributes()->val:null;
+        return $element?(int) $element[0]->getVal():null;
     }
 
     /**
@@ -141,7 +151,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getValue()
     {
-        $element = $this->xpath($this->toXPath('string', 'value'));
+        $element = $this->xpath('string', 'value');
 
         return $element?str_replace('#', '', (string) $element[0]):null;
     }
@@ -153,9 +163,11 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getPosition()
     {
-        $element = $this->xpath($this->toXPath('rectangle', 'obj_bb'));
+        $element = $this->xpath('rectangle', 'obj_bb');
 
-        return $element?preg_split('/[,]|[;]/', $element[0]->attributes()->val):null;
+        return $element
+            ?preg_split('/[,]|[;]/', $element[0]->getVal())
+            :null;
     }
 
     /**
@@ -165,9 +177,11 @@ class DiaXML extends \SimpleXMLElement
      */
     public function isAbstract()
     {
-        $element = $this->xpath($this->toXPath('boolean', 'abstract'));
+        $element = $this->xpath('boolean', 'abstract');
 
-        return $element?(($element[0]->attributes()->val == 'true')?true:false):null;
+        return $element
+            ?(($element[0]->getVal() == 'true')?true:false)
+            :null;
     }
 
     /**
@@ -177,9 +191,9 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getDirection()
     {
-        $element = $this->xpath($this->toXPath('enum', 'direction'));
+        $element = $this->xpath('enum', 'direction');
 
-        return $element?(int) $element[0]->attributes()->val:null;
+        return $element?(int) $element[0]->getVal():null;
     }
 
     /**
@@ -192,7 +206,7 @@ class DiaXML extends \SimpleXMLElement
     public function getNamePackage(\SimpleXMLElement $element)
     {
         $cPosition = $element->getPosition();
-        foreach($this->getPackages() as $element) {
+        foreach ($this->getPackages() as $element) {
             $pPosition = $element->getPosition();
             if (
                 (double) $pPosition[0] < (double) $cPosition[0] &&
@@ -217,7 +231,7 @@ class DiaXML extends \SimpleXMLElement
      */
     public function getConnection(array $classes, $type = 'simple')
     {
-        $element = $this->xpath($this->toXPath('connection'));
+        $element = $this->xpath('connection');
 
         if (!$element) {
             return null;
@@ -241,20 +255,22 @@ class DiaXML extends \SimpleXMLElement
     }
 
     /**
-     * toXPath element xml
+     * xpath xml
      *
      * @param string $type
      * @param string $replace
      * @param string $prefix
      *
-     * @return string $cssExpr
+     * @return SimpleXMLElement/null $element
      */
-    protected function toXPath($type, $replace = null, $prefix = 'descendant-or-self::')
+    public function xpath($type, $replace = null, $prefix = null)
     {
+        $prefix = $prefix?$prefix:'descendant-or-self::';
         $cssExpr = null;
         switch($type) {
             case 'object':
-                $cssExpr = sprintf('dia|layer[visible="true"] > dia|object[type="%s"]', $replace);
+                $cssExpr  = 'dia|layer[visible="true"] > ';
+                $cssExpr .= sprintf('dia|object[type="%s"]', $replace);
                 break;
             case 'composite':
                 $cssExpr = sprintf('dia|composite[type="%s"]', $replace);
@@ -266,9 +282,13 @@ class DiaXML extends \SimpleXMLElement
             case 'string':
             case 'rectangle':
             case 'enum':
-                $cssExpr = sprintf('dia|attribute[name="%s"] > dia|%s', $replace, $type);
+                $cssExpr  = sprintf('dia|attribute[name="%s"]', $replace);
+                $cssExpr .= ' > ';
+                $cssExpr .= sprintf('dia|%s', $type);
         }
 
-        return ($cssExpr)?CssSelector::toXPath($cssExpr, $prefix):null;
+        return ($cssExpr)
+            ?parent::xpath(CssSelector::toXPath($cssExpr, $prefix))
+            :null;
     }
 }

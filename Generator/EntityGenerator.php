@@ -88,6 +88,8 @@ class EntityGenerator extends Generator
 
         $code[] = '}';
 
-        return implode("\n", str_replace('<spaces>', $this->getSpaces(), $code));
+        $code = str_replace('<spaces>', $this->getSpaces(), $code);
+
+        return implode("\n", $code);
     }
 }

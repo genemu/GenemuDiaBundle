@@ -21,80 +21,118 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 class GenemuDiaExtension extends Extension
 {
+    protected $namespace = 'Genemu\Bundle\DiaBundle\Generator\Extension\\';
+    protected $extensions;
+
     public function load(array $configs, ContainerBuilder $container)
     {
-        $extensions = array(
-            'ORM' => array(
-                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\ORMExtension',
-                'namespace' => 'Doctrine\ORM\Mapping',
-                'types' => array(
-                    'MappedSuperclass',
-                    'InheritanceType',
-                    'DiscriminatorColumn',
-                    'ChangeTrackingPolicy',
-                    'HasLifecycleCallbacks',
-                    'Index',
-                    'OneToMany',
-                    'ManyToOne',
-                    'ManyToMany'
-                )
-            ),
-            'Assert' => array(
-                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\AssertExtension',
-                'namespace' => 'Symfony\Component\Validator\Constraints',
-                'types' => array(
-                    'NotBlank',
-                    'Blank',
-                    'NotNull',
-                    'Null',
-                    'True',
-                    'False',
-                    'Type',
-                    'Email',
-                    'MinLength',
-                    'MaxLength',
-                    'Url',
-                    'Regex',
-                    'Ip',
-                    'Max',
-                    'Min',
-                    'Date',
-                    'Time',
-                    'DateTime',
-                    'Choice',
-                    'Language',
-                    'Locale',
-                    'Country',
-                    'File',
-                    'Image',
-                    'Callback',
-                    'Valid'
-                )
-            ),
-            'DoctrineAssert' => array(
-                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\DoctrineAssertExtension',
-                'namespace' => 'Symfony\Bridge\Doctrine\Validator\Constraints',
-                'types' => array(
-                    'UniqueEntity'
-                )
-            ),
-            'Gedmo' => array(
-                'generator' => 'Genemu\Bundle\DiaBundle\Generator\Extension\GedmoExtension',
-                'namespace' => 'Gedmo\Mapping\Annotation',
-                'types' => array(
-                    'Timestampable',
-                    'Sluggable',
-                    'Tree',
-                    'Translatable',
-                    'Loggable'
-                )
-            )
-        );
+        $this->extensions = array();
+
+        $this->addORMExtension();
+        $this->addAssertExtension();
+        $this->addDoctrineAssertExtension();
+        $this->addGedmoExtension();
 
         if (isset($configs[0]['extensions'])) {
-            $extensions = array_merge($extensions, $configs[0]['extensions']);
+            $extensions = $configs[0]['extensions'];
+            $extensions = array_merge($this->extensions, $extensions);
         }
 
         $container->setParameter('genemu_dia.extensions', $extensions);
+    }
+
+    protected function addORMExtension()
+    {
+        $generator = $this->namespace.'ORMExtension';
+        $namespace = 'Doctrine\ORM\Mapping';
+        $types = array(
+            'MappedSuperclass',
+            'InheritanceType',
+            'DiscriminatorColumn',
+            'ChangeTrackingPolicy',
+            'HasLifecycleCallbacks',
+            'Index',
+            'OneToMany',
+            'ManyToOne',
+            'ManyToMany'
+        );
+
+        $this->extensions['ORM'] = array(
+            'generator' => $generator,
+            'namespace' => $namespace,
+            'types' => $types
+        );
+    }
+
+    protected function addAssertExtension()
+    {
+        $generator = $this->namespace.'AssertExtension';
+        $namespace = 'Symfony\Component\Validator\Constraint';
+        $types = array(
+            'NotBlank',
+            'Blank',
+            'NotNull',
+            'Null',
+            'True',
+            'False',
+            'Type',
+            'Email',
+            'MinLength',
+            'MaxLength',
+            'Url',
+            'Regex',
+            'Ip',
+            'Max',
+            'Min',
+            'Date',
+            'Time',
+            'DateTime',
+            'Choice',
+            'Language',
+            'Locale',
+            'Country',
+            'File',
+            'Image',
+            'Callback',
+            'Valid'
+        );
+
+        $this->extensions['Assert'] = array(
+            'generator' => $generator,
+            'namespace' => $namespace,
+            'types' => $types
+        );
+    }
+
+    protected function addDoctrineAssertExtension()
+    {
+        $generator = $this->namespace.'DoctrineAssertExtension';
+        $namespace = 'Symfony\Bridge\Doctrine\Validator\Constraints';
+        $types = array('UniqueEntity');
+
+        $this->extensions['DoctrineAssert'] = array(
+            'generator' => $generator,
+            'namespace' => $namespace,
+            'types' => $types
+        );
+    }
+
+    protected function addGedmoExtension()
+    {
+        $generator = $this->namespace.'GedmoExtension';
+        $namespace = 'Gedmo\Mapping\Annotation';
+        $types = array(
+            'Timestampable',
+            'Sluggable',
+            'Tree',
+            'Translatable',
+            'Loggable'
+        );
+
+        $this->extensions['Gedmo'] = array(
+            'generator' => $generator,
+            'namespace' => $namespace,
+            'types' => $types
+        );
     }
 }

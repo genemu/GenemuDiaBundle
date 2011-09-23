@@ -31,7 +31,9 @@ class DoctrineAssertExtension extends GeneratorExtension
         foreach ($this->parameters['fields'] as $field) {
             $fields[] = '"'.$field.'"';
         }
+        $fields = implode(', ', $fields);
+        $annotation = '@'.$this->prefix.'\UniqueEntity('.$fields.')';
 
-        $this->metadata->addAnnotation('@'.$this->prefix.'\UniqueEntity('.implode(', ', $fields).')');
+        $this->metadata->addAnnotation($annotation);
     }
 }

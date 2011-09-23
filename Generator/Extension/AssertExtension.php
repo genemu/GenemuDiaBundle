@@ -87,7 +87,11 @@ class AssertExtension extends GeneratorExtension
      */
     public function initMinLength()
     {
-        $this->updateAnnotation('MinLength', array('message', 'limit', 'charset'));
+        $this->updateAnnotation('MinLength', array(
+            'message',
+            'limit',
+            'charset'
+        ));
     }
 
     /**
@@ -95,7 +99,11 @@ class AssertExtension extends GeneratorExtension
      */
     public function initMaxLength()
     {
-        $this->updateAnnotation('MaxLength', array('message', 'limit', 'charset'));
+        $this->updateAnnotation('MaxLength', array(
+            'message',
+            'limit',
+            'charset'
+        ));
     }
 
     /**
@@ -127,7 +135,11 @@ class AssertExtension extends GeneratorExtension
      */
     public function initMax()
     {
-        $this->updateAnnotation('Max', array('limit', 'message', 'invalidMessage'));
+        $this->updateAnnotation('Max', array(
+            'limit',
+            'message',
+            'invalidMessage'
+        ));
     }
 
     /**
@@ -135,7 +147,11 @@ class AssertExtension extends GeneratorExtension
      */
     public function initMin()
     {
-        $this->updateAnnotation('Min', array('limit', 'message', 'invalidMessage'));
+        $this->updateAnnotation('Min', array(
+            'limit',
+            'message',
+            'invalidMessage'
+        ));
     }
 
     /**
@@ -228,7 +244,10 @@ class AssertExtension extends GeneratorExtension
      */
     public function initImage()
     {
-        $this->updateAnnotation('Image', array('mimeTypes', 'mimeTypesMessage'));
+        $this->updateAnnotation('Image', array(
+            'mimeTypes',
+            'mimeTypesMessage'
+        ));
     }
 
     /**
@@ -255,11 +274,14 @@ class AssertExtension extends GeneratorExtension
      */
     protected function updateAnnotation($type, array $parameters)
     {
-        if (!$field = $this->isFieldExists() || $field = $this->isAssociationExists()) {
+        if (
+            !$field = $this->isFieldExists() ||
+            $field = $this->isAssociationExists()
+        ) {
             return null;
         }
-
-        $parameters = array_intersect_key($this->parameters, array_flip($parameters));
+        $parameters = array_flip($parameters);
+        $parameters = array_intersect_key($this->parameters, $parameters);
 
         if (!$parameters) {
             $annotations = array('@'.$this->prefix.'\\'.$type.'()');
@@ -275,6 +297,9 @@ class AssertExtension extends GeneratorExtension
             $annotations[] = ')';
         }
 
-        $this->metadata->updateField($field['fieldName'], array('annotations' => $annotations));
+        $this->metadata->updateField(
+            $field['fieldName'],
+            array('annotations' => $annotations)
+        );
     }
 }
