@@ -23,6 +23,7 @@ class ClassMetadataInfo
     protected $name;
     protected $path;
     protected $parent;
+    protected $implements;
     protected $children;
     protected $namespace;
     protected $extensions;
@@ -48,6 +49,7 @@ class ClassMetadataInfo
         $this->namespace = $namespace;
         $this->path = $path;
 
+        $this->implements = array();
         $this->annotations = array();
         $this->extensions = array();
         $this->fields = array();
@@ -211,8 +213,9 @@ class ClassMetadataInfo
     {
         $abstract = $this->isAbstract?'abstract ':'';
         $parent = $this->parent?' extends '.$this->parent->getName():'';
+        $implements = $this->implements?' implements '.implode(', ', $this->implements):'';
 
-        return $abstract.'class '.$this->name.$parent;
+        return $abstract.'class '.$this->name.$parent.$implements;
     }
 
     /**
@@ -310,6 +313,16 @@ class ClassMetadataInfo
     public function getAssociations()
     {
         return $this->associations;
+    }
+
+    /**
+     * Get implements
+     *
+     * @return array $implements
+     */
+    public function getImplements()
+    {
+        return $this->implements;
     }
 
     /**
@@ -414,6 +427,19 @@ class ClassMetadataInfo
     public function addAnnotations(array $annotations)
     {
         $this->annotations = array_merge($this->annotations, $annotations);
+    }
+
+    /**
+     * Add implement
+     *
+     * @param string $namespace
+     */
+    public function addImplement($namespace)
+    {
+        $name = substr($namespace, strrpos($namespace, '\\')+1);
+
+        $this->addUse($namespace);
+        $this->implements[$namespace] = $name;
     }
 
     /**

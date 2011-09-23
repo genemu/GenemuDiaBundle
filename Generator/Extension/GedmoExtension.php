@@ -158,6 +158,7 @@ class GedmoExtension extends GeneratorExtension
             return null;
         }
 
+        $this->metadata->addImplement('Gedmo\Translatable\Translatable');
         $this->metadata->setRepositoryUse('Gedmo\Translatable\Entity\Repository\TranslationRepository');
         foreach (explode(',', $this->parameters['columns']) as $column) {
             if (array_key_exists($column, $this->metadata->getFields())) {
