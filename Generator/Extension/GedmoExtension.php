@@ -31,6 +31,7 @@ class GedmoExtension extends GeneratorExtension
             'Level' => 'lvl'
         );
 
+        $this->metadata->setRepositoryUse('Gedmo\Tree\Entity\Repository\NestedTreeRepository');
         $this->metadata->addUse('Collection');
         $this->metadata->addAnnotation('@'.$this->prefix.'\Tree("nested")');
 
@@ -157,6 +158,7 @@ class GedmoExtension extends GeneratorExtension
             return null;
         }
 
+        $this->metadata->setRepositoryUse('Gedmo\Translatable\Entity\Repository\TranslationRepository');
         foreach (explode(',', $this->parameters['columns']) as $column) {
             if (array_key_exists($column, $this->metadata->getFields())) {
                 $this->metadata->updateField($column, array(

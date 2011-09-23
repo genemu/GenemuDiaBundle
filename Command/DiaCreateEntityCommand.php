@@ -19,6 +19,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 use Genemu\Bundle\DiaBundle\Dia\DiaEngine;
 use Genemu\Bundle\DiaBundle\Generator\EntityGenerator;
+use Genemu\Bundle\DiaBundle\Generator\RepositoryGenerator;
 
 /**
  * DiaCreateEntityCommand
@@ -36,7 +37,8 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
             ->setName('dia:entity:create')
             ->setDescription('Create entity for schema dia')
             ->addArgument('file', InputArgument::REQUIRED, 'file')
-            ->addOption('type', false, InputOption::VALUE_NONE, 'type');
+            ->addOption('type', false, InputOption::VALUE_NONE, 'type')
+            ->addOption('repository', false, InputOption::VALUE_NONE, 'repository');
     }
 
     /**
@@ -61,6 +63,11 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
         foreach ($dia->getClasses() as $class) {
             $generator = $this->getEntityGenerator();
             $generator->generateEntity($class);
+
+            $generator = $this->getRepositoryGenerator();
+            $generator->setRegenerate($input->getOption('repository'));
+
+            $generator->generateRepository($class);
         }
     }
 
@@ -70,6 +77,17 @@ class DiaCreateEntityCommand extends ContainerAwareCommand
     protected function getEntityGenerator()
     {
         $generator = new EntityGenerator();
+
+        return $generator;
+    }
+
+    /**
+     * Create Repository generator
+     */
+    protected function getRepositoryGenerator()
+    {
+        $generator = new RepositoryGenerator();
+        $generator->setRegenerate(false);
 
         return $generator;
     }

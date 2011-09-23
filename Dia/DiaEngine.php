@@ -113,6 +113,7 @@ class DiaEngine
                 array('Annotations', 'Fields', 'Methods'),
                 new $orm['generator']($class, $this->use)
             );
+            $class->setRepositoryUse($orm['repository']);
 
             /**
              * Search attributes to class

@@ -18,6 +18,7 @@ class Generator
 {
     protected $extension;
     protected $spaces;
+    protected $regenerate;
 
     /**
      * Construct
@@ -27,6 +28,17 @@ class Generator
     {
         $this->extension = 'php';
         $this->spaces = 4;
+        $this->regenerate = true;
+    }
+
+    /**
+     * Set regenerate
+     *
+     * @param boolean $regenerate
+     */
+    public function setRegenerate($regenerate)
+    {
+        $this->regenerate = $regenerate;
     }
 
     /**
@@ -66,6 +78,8 @@ class Generator
             mkdir($path, 0777, true);
         }
 
-        file_put_contents($file, $contents);
+        if (!is_file($file) || $this->regenerate) {
+            file_put_contents($file, $contents);
+        }
     }
 }

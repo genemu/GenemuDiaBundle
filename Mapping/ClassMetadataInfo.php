@@ -27,6 +27,7 @@ class ClassMetadataInfo
     protected $namespace;
     protected $extensions;
     protected $uses;
+    protected $repositoryUse;
     protected $table;
     protected $annotations;
     protected $fields;
@@ -75,6 +76,16 @@ class ClassMetadataInfo
     }
 
     /**
+     * Get string repository namespace
+     *
+     * @return string $namespace
+     */
+    public function getRepositoryNamespace()
+    {
+        return $this->namespace.'\\Repository';
+    }
+
+    /**
      * Get string target entity
      *
      * @return string $namespace\$name
@@ -91,7 +102,7 @@ class ClassMetadataInfo
      */
     public function getTargetRepository()
     {
-        return $this->namespace.'\\Repository\\'.$this->name;
+        return $this->getRepositoryNamespace().'\\'.$this->name;
     }
 
     /**
@@ -102,6 +113,26 @@ class ClassMetadataInfo
     public function getPath()
     {
         return $this->path;
+    }
+
+    /**
+     * Get path repository
+     *
+     * @return string $path
+     */
+    public function getRepositoryPath()
+    {
+        return $this->path.'/Repository';
+    }
+
+    /**
+     * Get repository use
+     *
+     * @return string $repositoryUse
+     */
+    public function getRepositoryUse()
+    {
+        return $this->repositoryUse;
     }
 
     /**
@@ -147,6 +178,16 @@ class ClassMetadataInfo
     }
 
     /**
+     * Get code repository namespace
+     *
+     * @return string $namespace
+     */
+    public function getCodeRepositoryNamespace()
+    {
+        return 'namespace '.$this->getRepositoryNamespace().';';
+    }
+
+    /**
      * Get code uses
      *
      * @return array $uses
@@ -175,6 +216,18 @@ class ClassMetadataInfo
     }
 
     /**
+     * Get code repository class
+     *
+     * @return string $class
+     */
+    public function getCodeRepositoryClass()
+    {
+        $repository = substr($this->repositoryUse, strrpos($this->repositoryUse, '\\')+1);
+
+        return 'class '.$this->name.($repository?' extends '.$repository:'');
+    }
+
+    /**
      * Get code repository
      *
      * @param string $spaces
@@ -184,6 +237,16 @@ class ClassMetadataInfo
     public function getCodeRepository($spaces = '')
     {
         return $spaces.'repositoryClass="'.$this->getTargetRepository().'"';
+    }
+
+    /**
+     * Get code repository use
+     *
+     * @return string $repositoryUse
+     */
+    public function getCodeRepositoryUse()
+    {
+        return 'use '.$this->repositoryUse.';';
     }
 
     /**
@@ -430,6 +493,16 @@ class ClassMetadataInfo
     public function setChildren(array $children)
     {
         $this->children = $children;
+    }
+
+    /**
+     * Set repositoryUse
+     *
+     * @param string $repositoryUse
+     */
+    public function setRepositoryUse($repositoryUse)
+    {
+        $this->repositoryUse = $repositoryUse;
     }
 
     /**

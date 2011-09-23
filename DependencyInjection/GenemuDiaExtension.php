@@ -46,6 +46,7 @@ class GenemuDiaExtension extends Extension
     {
         $generator = $this->namespace.'ORMExtension';
         $namespace = 'Doctrine\ORM\Mapping';
+        $repository = 'Doctrine\ORM\EntityRepository';
         $types = array(
             'MappedSuperclass',
             'InheritanceType',
@@ -61,6 +62,7 @@ class GenemuDiaExtension extends Extension
         $this->extensions['ORM'] = array(
             'generator' => $generator,
             'namespace' => $namespace,
+            'repository' => $repository,
             'types' => $types
         );
     }
@@ -69,11 +71,13 @@ class GenemuDiaExtension extends Extension
     {
         $generator = $this->namespace.'MongoBDExtension';
         $namespace = 'Doctrine\ODM\MongoDB\Mapping\Annotations';
+        $repository = 'Doctrine\ODM\MongoDB\DocumentRepository';
         $types = array();
 
         $this->extensions['MongoDB'] = array(
             'generator' => $generator,
             'namespace' => $namespace,
+            'repository' => $repository,
             'types' => $types
         );
     }
